@@ -2,21 +2,18 @@ import torch
 import os
 
 import torch.nn.functional as F
-from contextlib import contextmanager
 import numpy as np
 from audioldm2.latent_diffusion.modules.ema import *
 
-from taming.modules.vqvae.quantize import VectorQuantizer2 as VectorQuantizer
-from torch.optim.lr_scheduler import LambdaLR
 from audioldm2.latent_diffusion.modules.diffusionmodules.model import Encoder, Decoder
 from audioldm2.latent_diffusion.modules.distributions.distributions import (
     DiagonalGaussianDistribution,
 )
-from audioldm2.latent_diffusion.util import instantiate_from_config
 import soundfile as sf
 
 from audioldm2.utilities.model import get_vocoder
 from audioldm2.utilities.tools import synth_one_sample
+
 
 class AutoencoderKL(nn.Module):
     def __init__(
@@ -37,8 +34,10 @@ class AutoencoderKL(nn.Module):
         base_learning_rate=1e-5,
     ):
         super().__init__()
-        self.automatic_optimization=False
-        assert "mel_bins" in ddconfig.keys(), "mel_bins is not specified in the Autoencoder config"
+        self.automatic_optimization = False
+        assert (
+            "mel_bins" in ddconfig.keys()
+        ), "mel_bins is not specified in the Autoencoder config"
         num_mel = ddconfig["mel_bins"]
         self.image_key = image_key
         self.sampling_rate = sampling_rate
@@ -199,7 +198,6 @@ class AutoencoderKL(nn.Module):
 
         return ret
 
-
     def save_wave(self, batch_wav, fname, save_dir):
         os.makedirs(save_dir, exist_ok=True)
 
@@ -283,7 +281,9 @@ class AutoencoderKL(nn.Module):
                     ),
                     "reconstruct_%s"
                     % name: wandb.Audio(
-                        wav_prediction, caption="reconstruct", sample_rate=self.sampling_rate
+                        wav_prediction,
+                        caption="reconstruct",
+                        sample_rate=self.sampling_rate,
                     ),
                     "samples_%s"
                     % name: wandb.Audio(

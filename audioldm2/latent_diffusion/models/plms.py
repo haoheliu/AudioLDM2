@@ -3,7 +3,6 @@
 import torch
 import numpy as np
 from tqdm import tqdm
-from functools import partial
 
 from audioldm2.latent_diffusion.modules.diffusionmodules.util import (
     make_ddim_sampling_parameters,

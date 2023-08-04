@@ -584,7 +584,7 @@ class Decoder(nn.Module):
             )
 
         # compute in_ch_mult, block_in and curr_res at lowest res
-        in_ch_mult = (1,) + tuple(ch_mult)
+        (1,) + tuple(ch_mult)
         block_in = ch * ch_mult[self.num_resolutions - 1]
         curr_res = resolution // 2 ** (self.num_resolutions - 1)
         self.z_shape = (1, z_channels, curr_res, curr_res)

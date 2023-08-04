@@ -1,31 +1,24 @@
 from multiprocessing.sharedctypes import Value
-import statistics
-import sys
 import os
-from tkinter import E
 
 import torch
 import torch.nn as nn
 import numpy as np
-from torch.optim.lr_scheduler import LambdaLR
 from einops import rearrange, repeat
 from contextlib import contextmanager
 from functools import partial
 from tqdm import tqdm
 from torchvision.utils import make_grid
 from audioldm2.latent_diffusion.modules.encoders.modules import *
-import datetime
 
 from audioldm2.latent_diffusion.util import (
     exists,
     default,
-    mean_flat,
     count_params,
     instantiate_from_config,
 )
 from audioldm2.latent_diffusion.modules.ema import LitEma
 from audioldm2.latent_diffusion.modules.distributions.distributions import (
-    normal_kl,
     DiagonalGaussianDistribution,
 )
 
@@ -38,7 +31,8 @@ from audioldm2.latent_diffusion.modules.distributions.distributions import (
 from audioldm2.latent_diffusion.modules.diffusionmodules.util import (
     make_beta_schedule,
     extract_into_tensor,
-    noise_like,)
+    noise_like,
+)
 
 from audioldm2.latent_diffusion.models.ddim import DDIMSampler
 from audioldm2.latent_diffusion.models.plms import PLMSSampler
@@ -48,16 +42,19 @@ import os
 __conditioning_keys__ = {"concat": "c_concat", "crossattn": "c_crossattn", "adm": "y"}
 
 CACHE_DIR = os.getenv(
-    "AUDIOLDM_CACHE_DIR",
-    os.path.join(os.path.expanduser("~"), ".cache/audioldm2"))
+    "AUDIOLDM_CACHE_DIR", os.path.join(os.path.expanduser("~"), ".cache/audioldm2")
+)
+
 
 def disabled_train(self, mode=True):
     """Overwrite model.train with this function to make sure train/eval mode
     does not change anymore."""
     return self
 
+
 def uniform_on_device(r1, r2, shape, device):
     return (r1 - r2) * torch.rand(*shape, device=device) + r2
+
 
 class DDPM(nn.Module):
     # classic DDPM with Gaussian diffusion, in image space
@@ -92,11 +89,15 @@ class DDPM(nn.Module):
         use_positional_encodings=False,
         learn_logvar=False,
         logvar_init=0.0,
-        evaluator = None,
+        evaluator=None,
         device=None,
     ):
         super().__init__()
-        assert parameterization in ["eps", "x0", "v"], 'currently only supporting "eps" and "x0" and "v"'
+        assert parameterization in [
+            "eps",
+            "x0",
+            "v",
+        ], 'currently only supporting "eps" and "x0" and "v"'
         self.parameterization = parameterization
         self.state = None
         self.device = device
@@ -110,10 +111,12 @@ class DDPM(nn.Module):
         self.first_stage_key = first_stage_key
         self.sampling_rate = sampling_rate
 
-        self.clap = CLAPAudioEmbeddingClassifierFreev2(pretrained_path="",
-                                                        sampling_rate=self.sampling_rate,
-                                                        embed_mode="audio",
-                                                        amodel = "HTSAT-base")
+        self.clap = CLAPAudioEmbeddingClassifierFreev2(
+            pretrained_path="",
+            sampling_rate=self.sampling_rate,
+            embed_mode="audio",
+            amodel="HTSAT-base",
+        )
 
         self.initialize_param_check_toolkit()
 
@@ -185,7 +188,9 @@ class DDPM(nn.Module):
         self.test_data_subset_path = None
 
     def get_log_dir(self):
-        return os.path.join(self.logger_save_dir, self.logger_exp_group_name, self.logger_exp_name)
+        return os.path.join(
+            self.logger_save_dir, self.logger_exp_group_name, self.logger_exp_name
+        )
 
     def set_log_dir(self, save_dir, exp_group_name, exp_name):
         self.logger_save_dir = save_dir
@@ -280,8 +285,15 @@ class DDPM(nn.Module):
                 / (2.0 * 1 - torch.Tensor(alphas_cumprod))
             )
         elif self.parameterization == "v":
-            lvlb_weights = torch.ones_like(self.betas ** 2 / (
-                    2 * self.posterior_variance * to_torch(alphas) * (1 - self.alphas_cumprod)))
+            lvlb_weights = torch.ones_like(
+                self.betas**2
+                / (
+                    2
+                    * self.posterior_variance
+                    * to_torch(alphas)
+                    * (1 - self.alphas_cumprod)
+                )
+            )
         else:
             raise NotImplementedError("mu not supported")
         # TODO how to choose this term
@@ -411,7 +423,7 @@ class DDPM(nn.Module):
     @torch.no_grad()
     def sample(self, batch_size=16, return_intermediates=False):
         shape = (batch_size, channels, self.latent_t_size, self.latent_f_size)
-        channels = self.channels
+        self.channels
         return self.p_sample_loop(shape, return_intermediates=return_intermediates)
 
     def q_sample(self, x_start, t, noise=None):
@@ -441,22 +453,23 @@ class DDPM(nn.Module):
         # self.register_buffer('sqrt_alphas_cumprod', to_torch(np.sqrt(alphas_cumprod)))
         # self.register_buffer('sqrt_one_minus_alphas_cumprod', to_torch(np.sqrt(1. - alphas_cumprod)))
         return (
-                extract_into_tensor(self.sqrt_alphas_cumprod, t, x_t.shape) * x_t -
-                extract_into_tensor(self.sqrt_one_minus_alphas_cumprod, t, x_t.shape) * v
+            extract_into_tensor(self.sqrt_alphas_cumprod, t, x_t.shape) * x_t
+            - extract_into_tensor(self.sqrt_one_minus_alphas_cumprod, t, x_t.shape) * v
         )
 
     def predict_eps_from_z_and_v(self, x_t, t, v):
         return (
-                extract_into_tensor(self.sqrt_alphas_cumprod, t, x_t.shape) * v +
-                extract_into_tensor(self.sqrt_one_minus_alphas_cumprod, t, x_t.shape) * x_t
+            extract_into_tensor(self.sqrt_alphas_cumprod, t, x_t.shape) * v
+            + extract_into_tensor(self.sqrt_one_minus_alphas_cumprod, t, x_t.shape)
+            * x_t
         )
 
     def get_v(self, x, noise, t):
         return (
-                extract_into_tensor(self.sqrt_alphas_cumprod, t, x.shape) * noise -
-                extract_into_tensor(self.sqrt_one_minus_alphas_cumprod, t, x.shape) * x
+            extract_into_tensor(self.sqrt_alphas_cumprod, t, x.shape) * noise
+            - extract_into_tensor(self.sqrt_one_minus_alphas_cumprod, t, x.shape) * x
         )
-        
+
     def forward(self, x, *args, **kwargs):
         # b, c, h, w, device, img_size, = *x.shape, x.device, self.image_size
         # assert h == img_size and w == img_size, f'height and width of image must be {img_size}'
@@ -500,8 +513,8 @@ class DDPM(nn.Module):
         ret["fname"] = fname
 
         for key in batch.keys():
-            if(key not in ret.keys()):
-                ret[key]= batch[key]
+            if key not in ret.keys():
+                ret[key] = batch[key]
 
         return ret[k]
 
@@ -569,13 +582,17 @@ class DDPM(nn.Module):
         total_num = 0
         require_grad_tensor = None
         for p in module.parameters():
-            if(p.requires_grad): 
+            if p.requires_grad:
                 requires_grad_num += 1
-                if(require_grad_tensor is None):
+                if require_grad_tensor is None:
                     require_grad_tensor = p
             total_num += 1
-        print("Module: [%s] have %s trainable parameters out of %s total parameters (%.2f)" % (name, requires_grad_num, total_num, requires_grad_num/total_num))
+        print(
+            "Module: [%s] have %s trainable parameters out of %s total parameters (%.2f)"
+            % (name, requires_grad_num, total_num, requires_grad_num / total_num)
+        )
         return require_grad_tensor
+
 
 class LatentDiffusion(DDPM):
     """main class"""
@@ -605,8 +622,8 @@ class LatentDiffusion(DDPM):
         self.num_timesteps_cond = default(num_timesteps_cond, 1)
         self.scale_by_std = scale_by_std
         self.warmup_steps = warmup_steps
-        
-        if(optimize_ddpm_parameter):
+
+        if optimize_ddpm_parameter:
             if unconditional_prob_cfg == 0.0:
                 "You choose to optimize DDPM. The classifier free guidance scale should be 0.1"
                 unconditional_prob_cfg = 0.1
@@ -614,7 +631,6 @@ class LatentDiffusion(DDPM):
             if unconditional_prob_cfg == 0.1:
                 "You choose not to optimize DDPM. The classifier free guidance scale should be 0.0"
                 unconditional_prob_cfg = 0.0
-
 
         self.evaluation_params = evaluation_params
         assert self.num_timesteps_cond <= kwargs["timesteps"]
@@ -666,9 +682,11 @@ class LatentDiffusion(DDPM):
     def configure_optimizers(self):
         lr = self.learning_rate
         params = list(self.model.parameters())
-        
+
         for each in self.cond_stage_models:
-            params = params + list(each.parameters()) # Add the parameter from the conditional stage
+            params = params + list(
+                each.parameters()
+            )  # Add the parameter from the conditional stage
 
         if self.learn_logvar:
             print("Diffusion model optimizing logvar")
@@ -779,23 +797,27 @@ class LatentDiffusion(DDPM):
 
     def get_learned_conditioning(self, c, key, unconditional_cfg):
         assert key in self.cond_stage_model_metadata.keys()
-        
+
         # Classifier-free guidance
-        if(not unconditional_cfg):
-            c = self.cond_stage_models[self.cond_stage_model_metadata[key]["model_idx"]](c)
-        else:        
+        if not unconditional_cfg:
+            c = self.cond_stage_models[
+                self.cond_stage_model_metadata[key]["model_idx"]
+            ](c)
+        else:
             # when the cond_stage_key is "all", pick one random element out
-            if(isinstance(c, dict)):
+            if isinstance(c, dict):
                 c = c[list(c.keys())[0]]
-        
-            if(isinstance(c, torch.Tensor)):
+
+            if isinstance(c, torch.Tensor):
                 batchsize = c.size(0)
-            elif(isinstance(c, list)):
+            elif isinstance(c, list):
                 batchsize = len(c)
             else:
                 raise NotImplementedError()
 
-            c = self.cond_stage_models[self.cond_stage_model_metadata[key]["model_idx"]].get_unconditional_condition(batchsize)
+            c = self.cond_stage_models[
+                self.cond_stage_model_metadata[key]["model_idx"]
+            ].get_unconditional_condition(batchsize)
 
         return c
 
@@ -807,8 +829,8 @@ class LatentDiffusion(DDPM):
         return_decoding_output=False,
         return_encoder_input=False,
         return_encoder_output=False,
-        unconditional_prob_cfg = 0.1,
-    ):    
+        unconditional_prob_cfg=0.1,
+    ):
         x = super().get_input(batch, k)
 
         x = x.to(self.device)
@@ -819,24 +841,35 @@ class LatentDiffusion(DDPM):
         else:
             z = None
         cond_dict = {}
-        if(len(self.cond_stage_model_metadata.keys()) > 0):
+        if len(self.cond_stage_model_metadata.keys()) > 0:
             unconditional_cfg = False
-            if(self.conditional_dry_run_finished and self.make_decision(unconditional_prob_cfg)):
+            if self.conditional_dry_run_finished and self.make_decision(
+                unconditional_prob_cfg
+            ):
                 unconditional_cfg = True
             for cond_model_key in self.cond_stage_model_metadata.keys():
-                cond_stage_key = self.cond_stage_model_metadata[cond_model_key]["cond_stage_key"]
-                
-                if(cond_model_key in cond_dict.keys()):
+                cond_stage_key = self.cond_stage_model_metadata[cond_model_key][
+                    "cond_stage_key"
+                ]
+
+                if cond_model_key in cond_dict.keys():
                     continue
 
-                if(not self.training):
-                    if(isinstance(self.cond_stage_models[self.cond_stage_model_metadata[cond_model_key]["model_idx"]], CLAPAudioEmbeddingClassifierFreev2)):
-                        print("Warning: CLAP model normally should use text for evaluation")
-                
+                if not self.training:
+                    if isinstance(
+                        self.cond_stage_models[
+                            self.cond_stage_model_metadata[cond_model_key]["model_idx"]
+                        ],
+                        CLAPAudioEmbeddingClassifierFreev2,
+                    ):
+                        print(
+                            "Warning: CLAP model normally should use text for evaluation"
+                        )
+
                 # The original data for conditioning
                 # If cond_model_key is "all", that means the conditional model need all the information from a batch
-                
-                if(cond_stage_key != "all"):
+
+                if cond_stage_key != "all":
                     xc = super().get_input(batch, cond_stage_key)
                     if type(xc) == torch.Tensor:
                         xc = xc.to(self.device)
@@ -845,16 +878,18 @@ class LatentDiffusion(DDPM):
 
                 # if cond_stage_key is "all", xc will be a dictionary containing all keys
                 # Otherwise xc will be an entry of the dictionary
-                c = self.get_learned_conditioning(xc, key=cond_model_key, unconditional_cfg=unconditional_cfg)
-                
+                c = self.get_learned_conditioning(
+                    xc, key=cond_model_key, unconditional_cfg=unconditional_cfg
+                )
+
                 # cond_dict will be used to condition the diffusion model
                 # If one conditional model return multiple conditioning signal
-                if(isinstance(c, dict)):
+                if isinstance(c, dict):
                     for k in c.keys():
                         cond_dict[k] = c[k]
                 else:
                     cond_dict[cond_model_key] = c
-        
+
         # If the key is accidently added to the dictionary and not in the condition list, remove the condition
         # for k in list(cond_dict.keys()):
         #     if(k not in self.cond_stage_model_metadata.keys()):
@@ -862,17 +897,17 @@ class LatentDiffusion(DDPM):
 
         out = [z, cond_dict]
 
-        if(return_decoding_output):
+        if return_decoding_output:
             xrec = self.decode_first_stage(z)
             out += [xrec]
-        
-        if(return_encoder_input):
+
+        if return_encoder_input:
             out += [x]
 
-        if(return_encoder_output):
+        if return_encoder_output:
             out += [encoder_posterior]
 
-        if(not self.conditional_dry_run_finished):
+        if not self.conditional_dry_run_finished:
             self.conditional_dry_run_finished = True
 
         # Output is a dictionary, where the value could only be tensor or tuple
@@ -903,52 +938,57 @@ class LatentDiffusion(DDPM):
 
     def extract_possible_loss_in_cond_dict(self, cond_dict):
         # This function enable the conditional module to return loss function that can optimize them
-        
+
         assert isinstance(cond_dict, dict)
         losses = {}
 
         for cond_key in cond_dict.keys():
-            if("loss" in cond_key and "noncond" in cond_key):
+            if "loss" in cond_key and "noncond" in cond_key:
                 assert cond_key not in losses.keys()
                 losses[cond_key] = cond_dict[cond_key]
 
         return losses
 
-    def filter_useful_cond_dict(self,cond_dict):
+    def filter_useful_cond_dict(self, cond_dict):
         new_cond_dict = {}
         for key in cond_dict.keys():
-            if(key in self.cond_stage_model_metadata.keys()):
+            if key in self.cond_stage_model_metadata.keys():
                 new_cond_dict[key] = cond_dict[key]
-        
+
         # All the conditional key in the metadata should be used
         for key in self.cond_stage_model_metadata.keys():
-            assert key in new_cond_dict.keys(), "%s, %s" % (key, str(new_cond_dict.keys()))
+            assert key in new_cond_dict.keys(), "%s, %s" % (
+                key,
+                str(new_cond_dict.keys()),
+            )
 
         return new_cond_dict
 
     def shared_step(self, batch, **kwargs):
-        if(self.training):
+        if self.training:
             # Classifier-free guidance
             unconditional_prob_cfg = self.unconditional_prob_cfg
         else:
-            unconditional_prob_cfg = 0.0 # TODO possible bug here
+            unconditional_prob_cfg = 0.0  # TODO possible bug here
 
-        x, c = self.get_input(batch, self.first_stage_key, unconditional_prob_cfg=unconditional_prob_cfg)
-        
-        if(self.optimize_ddpm_parameter):
+        x, c = self.get_input(
+            batch, self.first_stage_key, unconditional_prob_cfg=unconditional_prob_cfg
+        )
+
+        if self.optimize_ddpm_parameter:
             loss, loss_dict = self(x, self.filter_useful_cond_dict(c))
         else:
             loss_dict = {}
             loss = None
-        
+
         additional_loss_for_cond_modules = self.extract_possible_loss_in_cond_dict(c)
         assert isinstance(additional_loss_for_cond_modules, dict)
 
         loss_dict.update(additional_loss_for_cond_modules)
 
-        if(len(additional_loss_for_cond_modules.keys()) > 0):
+        if len(additional_loss_for_cond_modules.keys()) > 0:
             for k in additional_loss_for_cond_modules.keys():
-                if(loss is None):
+                if loss is None:
                     loss = additional_loss_for_cond_modules[k]
                 else:
                     loss = loss + additional_loss_for_cond_modules[k]
@@ -962,7 +1002,7 @@ class LatentDiffusion(DDPM):
         #         on_step=True,
         #         on_epoch=True,
         #     )
-        if(self.training):
+        if self.training:
             assert loss is not None
 
         return loss, loss_dict
@@ -986,7 +1026,7 @@ class LatentDiffusion(DDPM):
         return new_cond_dict
 
     def apply_model(self, x_noisy, t, cond, return_ids=False):
-        cond=self.reorder_cond_dict(cond)
+        cond = self.reorder_cond_dict(cond)
 
         x_recon = self.model(x_noisy, t, cond_dict=cond)
 
@@ -1271,7 +1311,7 @@ class LatentDiffusion(DDPM):
 
         for i in iterator:
             ts = torch.full((b,), i, device=device, dtype=torch.long)
-            
+
             if self.shorten_cond_schedule:
                 assert self.model.conditioning_key != "hybrid"
                 tc = self.cond_ids[ts].to(cond.device)
@@ -1363,7 +1403,9 @@ class LatentDiffusion(DDPM):
             else:
                 raise NotImplementedError
             todo_waveform = waveform[i, 0]
-            todo_waveform = (todo_waveform / np.max(np.abs(todo_waveform))) * 0.8 # Normalize the energy of the generation output
+            todo_waveform = (
+                todo_waveform / np.max(np.abs(todo_waveform))
+            ) * 0.8  # Normalize the energy of the generation output
             sf.write(path, todo_waveform, samplerate=self.sampling_rate)
 
     @torch.no_grad()
@@ -1386,7 +1428,6 @@ class LatentDiffusion(DDPM):
 
         intermediate = None
         if ddim and not use_plms:
-
             ddim_sampler = DDIMSampler(self)
             samples, intermediates = ddim_sampler.sample(
                 ddim_steps,
@@ -1451,10 +1492,10 @@ class LatentDiffusion(DDPM):
         with self.ema_scope("Plotting"):
             z, c = self.get_input(
                 batch,
-                self.first_stage_key, 
-                unconditional_prob_cfg=0.0 # Do not output unconditional information in the c
+                self.first_stage_key,
+                unconditional_prob_cfg=0.0,  # Do not output unconditional information in the c
             )
-            
+
             c = self.filter_useful_cond_dict(c)
 
             text = super().get_input(batch, "text")
@@ -1464,23 +1505,25 @@ class LatentDiffusion(DDPM):
 
             # Generate multiple samples at a time and filter out the best
             # The condition to the diffusion wrapper can have many format
-            for cond_key in c.keys():   
-                if(isinstance(c[cond_key], list)):
+            for cond_key in c.keys():
+                if isinstance(c[cond_key], list):
                     for i in range(len(c[cond_key])):
-                        c[cond_key][i] = torch.cat([c[cond_key][i]] * n_gen, dim=0)        
-                elif(isinstance(c[cond_key], dict)):
+                        c[cond_key][i] = torch.cat([c[cond_key][i]] * n_gen, dim=0)
+                elif isinstance(c[cond_key], dict):
                     for k in c[cond_key].keys():
-                        c[cond_key][k] = torch.cat([c[cond_key][k]] * n_gen, dim=0)   
+                        c[cond_key][k] = torch.cat([c[cond_key][k]] * n_gen, dim=0)
                 else:
                     c[cond_key] = torch.cat([c[cond_key]] * n_gen, dim=0)
-            
+
             text = text * n_gen
 
             if unconditional_guidance_scale != 1.0:
                 unconditional_conditioning = {}
                 for key in self.cond_stage_model_metadata:
                     model_idx = self.cond_stage_model_metadata[key]["model_idx"]
-                    unconditional_conditioning[key] = self.cond_stage_models[model_idx].get_unconditional_condition(batch_size)
+                    unconditional_conditioning[key] = self.cond_stage_models[
+                        model_idx
+                    ].get_unconditional_condition(batch_size)
 
             fnames = list(super().get_input(batch, "fname"))
             samples, _ = self.sample_log(
@@ -1501,9 +1544,11 @@ class LatentDiffusion(DDPM):
                 mel, savepath="", bs=None, name=fnames, save=False
             )
 
-            if(n_gen > 1):    
+            if n_gen > 1:
                 best_index = []
-                similarity = self.clap.cos_similarity(torch.FloatTensor(waveform).squeeze(1), text)
+                similarity = self.clap.cos_similarity(
+                    torch.FloatTensor(waveform).squeeze(1), text
+                )
                 for i in range(z.shape[0]):
                     candidates = similarity[i :: z.shape[0]]
                     max_index = torch.argmax(candidates).item()
@@ -1513,7 +1558,7 @@ class LatentDiffusion(DDPM):
 
                 print("Similarity between generated audio and text", similarity)
                 print("Choose the following indexes:", best_index)
-            
+
             return waveform
 
     @torch.no_grad()
@@ -1543,9 +1588,9 @@ class LatentDiffusion(DDPM):
             assert ddim_steps is not None
 
         use_ddim = ddim_steps is not None
-        if(name is None):
+        if name is None:
             name = self.get_validation_folder_name()
-            
+
         waveform_save_path = os.path.join(self.get_log_dir(), name)
         os.makedirs(waveform_save_path, exist_ok=True)
         print("Waveform save path: ", waveform_save_path)
@@ -1561,13 +1606,13 @@ class LatentDiffusion(DDPM):
             for i, batch in enumerate(batchs):
                 z, c = self.get_input(
                     batch,
-                    self.first_stage_key, 
-                    unconditional_prob_cfg=0.0 # Do not output unconditional information in the c
+                    self.first_stage_key,
+                    unconditional_prob_cfg=0.0,  # Do not output unconditional information in the c
                 )
 
                 if limit_num is not None and i * z.size(0) > limit_num:
                     break
-                
+
                 c = self.filter_useful_cond_dict(c)
 
                 text = super().get_input(batch, "text")
@@ -1577,23 +1622,25 @@ class LatentDiffusion(DDPM):
 
                 # Generate multiple samples at a time and filter out the best
                 # The condition to the diffusion wrapper can have many format
-                for cond_key in c.keys():   
-                    if(isinstance(c[cond_key], list)):
+                for cond_key in c.keys():
+                    if isinstance(c[cond_key], list):
                         for i in range(len(c[cond_key])):
-                            c[cond_key][i] = torch.cat([c[cond_key][i]] * n_gen, dim=0)        
-                    elif(isinstance(c[cond_key], dict)):
+                            c[cond_key][i] = torch.cat([c[cond_key][i]] * n_gen, dim=0)
+                    elif isinstance(c[cond_key], dict):
                         for k in c[cond_key].keys():
-                            c[cond_key][k] = torch.cat([c[cond_key][k]] * n_gen, dim=0)   
+                            c[cond_key][k] = torch.cat([c[cond_key][k]] * n_gen, dim=0)
                     else:
                         c[cond_key] = torch.cat([c[cond_key]] * n_gen, dim=0)
-                
+
                 text = text * n_gen
 
                 if unconditional_guidance_scale != 1.0:
                     unconditional_conditioning = {}
                     for key in self.cond_stage_model_metadata:
                         model_idx = self.cond_stage_model_metadata[key]["model_idx"]
-                        unconditional_conditioning[key] = self.cond_stage_models[model_idx].get_unconditional_condition(batch_size)
+                        unconditional_conditioning[key] = self.cond_stage_models[
+                            model_idx
+                        ].get_unconditional_condition(batch_size)
 
                 fnames = list(super().get_input(batch, "fname"))
                 samples, _ = self.sample_log(
@@ -1614,10 +1661,12 @@ class LatentDiffusion(DDPM):
                     mel, savepath=waveform_save_path, bs=None, name=fnames, save=False
                 )
 
-                if(n_gen > 1):    
-                    try: 
+                if n_gen > 1:
+                    try:
                         best_index = []
-                        similarity = self.clap.cos_similarity(torch.FloatTensor(waveform).squeeze(1), text)
+                        similarity = self.clap.cos_similarity(
+                            torch.FloatTensor(waveform).squeeze(1), text
+                        )
                         for i in range(z.shape[0]):
                             candidates = similarity[i :: z.shape[0]]
                             max_index = torch.argmax(candidates).item()
@@ -1632,6 +1681,7 @@ class LatentDiffusion(DDPM):
                 self.save_waveform(waveform, waveform_save_path, name=fnames)
         return waveform_save_path
 
+
 class DiffusionWrapper(nn.Module):
     def __init__(self, diff_model_config, conditioning_key):
         super().__init__()
@@ -1640,17 +1690,20 @@ class DiffusionWrapper(nn.Module):
         self.conditioning_key = conditioning_key
 
         for key in self.conditioning_key:
-            if("concat" in key or "crossattn" in key or "hybrid" in key or "film" in key or "noncond" in key):
+            if (
+                "concat" in key
+                or "crossattn" in key
+                or "hybrid" in key
+                or "film" in key
+                or "noncond" in key
+            ):
                 continue
             else:
                 raise Value("The conditioning key %s is illegal" % key)
-        
+
         self.being_verbosed_once = False
 
-    def forward(
-        self, x, t, cond_dict: dict={}
-    ):
-
+    def forward(self, x, t, cond_dict: dict = {}):
         x = x.contiguous()
         t = t.contiguous()
 
@@ -1659,36 +1712,43 @@ class DiffusionWrapper(nn.Module):
 
         y = None
         context_list, attn_mask_list = [], []
-        
+
         conditional_keys = cond_dict.keys()
 
         for key in conditional_keys:
-            if("concat" in key):
-                xc = torch.cat([x, cond_dict[key].unsqueeze(1)], dim=1)    
-            elif("film" in key):
-                if(y is None):
+            if "concat" in key:
+                xc = torch.cat([x, cond_dict[key].unsqueeze(1)], dim=1)
+            elif "film" in key:
+                if y is None:
                     y = cond_dict[key].squeeze(1)
                 else:
-                    y = torch.cat([y, cond_dict[key].squeeze(1)],dim=-1)
-            elif("crossattn" in key):
+                    y = torch.cat([y, cond_dict[key].squeeze(1)], dim=-1)
+            elif "crossattn" in key:
                 # assert context is None, "You can only have one context matrix, got %s" % (cond_dict.keys())
-                if(isinstance(cond_dict[key], dict)):
+                if isinstance(cond_dict[key], dict):
                     for k in cond_dict[key].keys():
-                        if("crossattn" in k):
-                            context, attn_mask = cond_dict[key][k] # crossattn_audiomae_pooled: torch.Size([12, 128, 768])
+                        if "crossattn" in k:
+                            context, attn_mask = cond_dict[key][
+                                k
+                            ]  # crossattn_audiomae_pooled: torch.Size([12, 128, 768])
                 else:
-                    assert len(cond_dict[key]) == 2, "The context condition for %s you returned should have two element, one context one mask" % (key)
+                    assert len(cond_dict[key]) == 2, (
+                        "The context condition for %s you returned should have two element, one context one mask"
+                        % (key)
+                    )
                     context, attn_mask = cond_dict[key]
-                
+
                 # The input to the UNet model is a list of context matrix
                 context_list.append(context)
                 attn_mask_list.append(attn_mask)
 
-            elif("noncond" in key): # If you use loss function in the conditional module, include the keyword "noncond" in the return dictionary
+            elif (
+                "noncond" in key
+            ):  # If you use loss function in the conditional module, include the keyword "noncond" in the return dictionary
                 continue
             else:
                 raise NotImplementedError()
-        
+
         # if(not self.being_verbosed_once):
         #     print("The input shape to the diffusion model is as follows:")
         #     print("xc", xc.size())
@@ -1697,8 +1757,10 @@ class DiffusionWrapper(nn.Module):
         #         print("context_%s" % i, context_list[i].size(), attn_mask_list[i].size())
         #     if(y is not None):
         #         print("y", y.size())
-        #     self.being_verbosed_once = True    
-        out = self.diffusion_model(xc, t, context_list=context_list, y=y, context_attn_mask_list=attn_mask_list)
+        #     self.being_verbosed_once = True
+        out = self.diffusion_model(
+            xc, t, context_list=context_list, y=y, context_attn_mask_list=attn_mask_list
+        )
         return out
         self.warmup_step()
 
@@ -1732,7 +1794,7 @@ class DiffusionWrapper(nn.Module):
                 )
                 print(k, self.metrics_buffer[k])
             self.metrics_buffer = {}
-        
+
         loss, loss_dict = self.shared_step(batch)
 
         self.log_dict(
@@ -1761,6 +1823,7 @@ class DiffusionWrapper(nn.Module):
             on_step=True,
             on_epoch=False,
         )
+
 
 if __name__ == "__main__":
     import yaml

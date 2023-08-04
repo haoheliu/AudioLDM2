@@ -10,7 +10,7 @@ import logging
 matplotlib_logger = logging.getLogger('matplotlib')
 matplotlib_logger.setLevel(logging.WARNING)
 
-from audioldm2 import text_to_audio, build_model, save_wave, get_time, round_up_duration, get_duration
+from audioldm2 import text_to_audio, build_model, save_wave, get_time
 import argparse
 
 CACHE_DIR = os.getenv(
@@ -145,7 +145,7 @@ if(args.file_path is not None):
 
 text = args.text
 random_seed = args.seed
-duration = args.duration
+duration = 10
 guidance_scale = args.guidance_scale
 n_candidate_gen_per_text = args.n_candidate_gen_per_text
 

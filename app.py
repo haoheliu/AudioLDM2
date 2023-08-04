@@ -1,13 +1,14 @@
 from huggingface_hub import hf_hub_download
 import torch
 import os
-os.environ["TOKENIZERS_PARALLELISM"]="true"
+
+os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
 import gradio as gr
 from audioldm2 import text_to_audio, build_model
 from share_btn import community_icon_html, loading_icon_html, share_js
 
-model_id="haoheliu/audioldm2-full"
+model_id = "haoheliu/audioldm2-full"
 hf_hub_download(repo_id="haoheliu/audioldm2-full", filename="audioldm2-full.pth")
 
 audioldm = None
@@ -20,24 +21,32 @@ current_model_name = None
 #     # append the new user input tokens to the chat history
 #     bot_input_ids = torch.cat([torch.LongTensor(history), new_user_input_ids], dim=-1)
 
-#     # generate a response 
+#     # generate a response
 #     history = model.generate(bot_input_ids, max_length=1000, pad_token_id=tokenizer.eos_token_id).tolist()
 
 #     # convert the tokens to text, and then split the responses into lines
 #     response = tokenizer.decode(history[0]).split("<|endoftext|>")
 #     response = [(response[i], response[i+1]) for i in range(0, len(response)-1, 2)]  # convert to tuples of list
 #     return response, history
-  
-def text2audio(text, duration, guidance_scale, random_seed, n_candidates, model_name="audioldm2-full"):
+
+
+def text2audio(
+    text,
+    duration,
+    guidance_scale,
+    random_seed,
+    n_candidates,
+    model_name="audioldm2-full",
+):
     global audioldm, current_model_name
-    
+
     torch.set_float32_matmul_precision("high")
-    
+
     if audioldm is None or model_name != current_model_name:
-        audioldm=build_model(model_name=model_name)
+        audioldm = build_model(model_name=model_name)
         current_model_name = model_name
         audioldm = torch.compile(audioldm)
-        
+
     # print(text, length, guidance_scale)
     waveform = text_to_audio(
         latent_diffusion=audioldm,
@@ -51,9 +60,10 @@ def text2audio(text, duration, guidance_scale, random_seed, n_candidates, model_
         gr.make_waveform((16000, wave[0]), bg_image="bg.png") for wave in waveform
     ]
     # waveform = [(16000, np.random.randn(16000)), (16000, np.random.randn(16000))]
-    if(len(waveform) == 1):
-      waveform = waveform[0]
+    if len(waveform) == 1:
+        waveform = waveform[0]
     return waveform
+
 
 css = """
         a {
@@ -215,7 +225,8 @@ with iface:
             </div>
         """
     )
-    gr.HTML("""
+    gr.HTML(
+        """
         <h1 style="font-weight: 900; margin-bottom: 7px;">
         AudioLDM: Text-to-Audio Generation with Latent Diffusion Models
         </h1>
@@ -224,24 +235,47 @@ with iface:
         <a href="https://huggingface.co/spaces/haoheliu/audioldm-text-to-audio-generation?duplicate=true">
         <img style="margin-top: 0em; margin-bottom: 0em" src="https://bit.ly/3gLdBN6" alt="Duplicate Space"></a>
         <p/>
-    """)
+    """
+    )
     with gr.Group():
         with gr.Box():
             ############# Input
-            textbox = gr.Textbox(value="A hammer is hitting a wooden surface", max_lines=1, label="Input your text here. Your text is important for the audio quality. Please ensure it is descriptive by using more adjectives.", elem_id="prompt-in")
+            textbox = gr.Textbox(
+                value="A hammer is hitting a wooden surface",
+                max_lines=1,
+                label="Input your text here. Your text is important for the audio quality. Please ensure it is descriptive by using more adjectives.",
+                elem_id="prompt-in",
+            )
 
             with gr.Accordion("Click to modify detailed configurations", open=False):
-              seed = gr.Number(value=45, label="Change this value (any integer number) will lead to a different generation result.")
-              duration = gr.Slider(10, 10, value=10, step=2.5, label="Duration (seconds)")
-              guidance_scale = gr.Slider(0, 6, value=3.5, step=0.5, label="Guidance scale (Large => better quality and relavancy to text; Small => better diversity)")
-              n_candidates = gr.Slider(1, 3, value=3, step=1, label="Automatic quality control. This number control the number of candidates (e.g., generate three audios and choose the best to show you). A Larger value usually lead to better quality with heavier computation")
-              # model_name = gr.Dropdown(
-              #       ["audioldm-m-text-ft", "audioldm-s-text-ft", "audioldm-m-full","audioldm-s-full-v2", "audioldm-s-full", "audioldm-l-full"], value="audioldm-m-full", label="Choose the model to use. audioldm-m-text-ft and audioldm-s-text-ft are recommanded. -s- means small, -m- means medium and -l- means large",
-              #   )
+                seed = gr.Number(
+                    value=45,
+                    label="Change this value (any integer number) will lead to a different generation result.",
+                )
+                duration = gr.Slider(
+                    10, 10, value=10, step=2.5, label="Duration (seconds)"
+                )
+                guidance_scale = gr.Slider(
+                    0,
+                    6,
+                    value=3.5,
+                    step=0.5,
+                    label="Guidance scale (Large => better quality and relavancy to text; Small => better diversity)",
+                )
+                n_candidates = gr.Slider(
+                    1,
+                    3,
+                    value=3,
+                    step=1,
+                    label="Automatic quality control. This number control the number of candidates (e.g., generate three audios and choose the best to show you). A Larger value usually lead to better quality with heavier computation",
+                )
+                # model_name = gr.Dropdown(
+                #       ["audioldm-m-text-ft", "audioldm-s-text-ft", "audioldm-m-full","audioldm-s-full-v2", "audioldm-s-full", "audioldm-l-full"], value="audioldm-m-full", label="Choose the model to use. audioldm-m-text-ft and audioldm-s-text-ft are recommanded. -s- means small, -m- means medium and -l- means large",
+                #   )
             ############# Output
             # outputs=gr.Audio(label="Output", type="numpy")
-            outputs=gr.Video(label="Output", elem_id="output-video")
-            
+            outputs = gr.Video(label="Output", elem_id="output-video")
+
             # with gr.Group(elem_id="container-advanced-btns"):
             #   # advanced_button = gr.Button("Advanced options", elem_id="advanced-btn")
             #   with gr.Group(elem_id="share-btn-container"):
@@ -258,11 +292,15 @@ with iface:
 
         # btn.click(text2audio, inputs=[
         #           textbox, duration, guidance_scale, seed, n_candidates, model_name], outputs=[outputs])
-        btn.click(text2audio, inputs=[
-                  textbox, duration, guidance_scale, seed, n_candidates], outputs=[outputs])
-        
+        btn.click(
+            text2audio,
+            inputs=[textbox, duration, guidance_scale, seed, n_candidates],
+            outputs=[outputs],
+        )
+
         share_button.click(None, [], [], _js=share_js)
-        gr.HTML('''
+        gr.HTML(
+            """
         <div class="footer" style="text-align: center; max-width: 700px; margin: 0 auto;">
                     <p>Follow the latest update of AudioLDM on our<a href="https://github.com/haoheliu/AudioLDM" style="text-decoration: underline;" target="_blank"> Github repo</a>
                     </p>
@@ -270,28 +308,67 @@ with iface:
                     <p>Model by <a href="https://twitter.com/LiuHaohe" style="text-decoration: underline;" target="_blank">Haohe Liu</a></p>
                     <br>
         </div>
-        ''')
-        gr.Examples([
-            ["A hammer is hitting a wooden surface", 10, 3.5, 45, 3, "audioldm2-full"],
-            ["Peaceful and calming ambient music with singing bowl and other instruments.", 10, 3.5, 45, 3, "audioldm2-full"],
-            ["A man is speaking in a small room.", 10, 3.5, 45, 3, "audioldm2-full"],
-            ["A female is speaking followed by footstep sound", 10, 3.5, 45, 3, "audioldm2-full"],
-            ["Wooden table tapping sound followed by water pouring sound.", 10, 3.5, 45, 3, "audioldm2-full"],
-        ],
+        """
+        )
+        gr.Examples(
+            [
+                [
+                    "A hammer is hitting a wooden surface",
+                    10,
+                    3.5,
+                    45,
+                    3,
+                    "audioldm2-full",
+                ],
+                [
+                    "Peaceful and calming ambient music with singing bowl and other instruments.",
+                    10,
+                    3.5,
+                    45,
+                    3,
+                    "audioldm2-full",
+                ],
+                [
+                    "A man is speaking in a small room.",
+                    10,
+                    3.5,
+                    45,
+                    3,
+                    "audioldm2-full",
+                ],
+                [
+                    "A female is speaking followed by footstep sound",
+                    10,
+                    3.5,
+                    45,
+                    3,
+                    "audioldm2-full",
+                ],
+                [
+                    "Wooden table tapping sound followed by water pouring sound.",
+                    10,
+                    3.5,
+                    45,
+                    3,
+                    "audioldm2-full",
+                ],
+            ],
             fn=text2audio,
             # inputs=[textbox, duration, guidance_scale, seed, n_candidates, model_name],
             inputs=[textbox, duration, guidance_scale, seed, n_candidates],
             outputs=[outputs],
             cache_examples=True,
         )
-        gr.HTML('''
+        gr.HTML(
+            """
                 <div class="acknowledgements">
                 <p>Essential Tricks for Enhancing the Quality of Your Generated Audio</p>
                 <p>1. Try to use more adjectives to describe your sound. For example: "A man is speaking clearly and slowly in a large room" is better than "A man is speaking". This can make sure AudioLDM understands what you want.</p>
                 <p>2. Try to use different random seeds, which can affect the generation quality significantly sometimes.</p>
                 <p>3. It's better to use general terms like 'man' or 'woman' instead of specific names for individuals or abstract objects that humans may not be familiar with, such as 'mummy'.</p>
                 </div>
-                ''')
+                """
+        )
         with gr.Accordion("Additional information", open=False):
             gr.HTML(
                 """

@@ -6,7 +6,6 @@ Adapted to the Audio Task.
 
 from collections import OrderedDict
 from dataclasses import dataclass
-from email.mime import audio
 from typing import Tuple, Union, Callable, Optional
 
 import numpy as np
@@ -14,14 +13,12 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from .timm_model import TimmModel
 import logging
 from .utils import freeze_batch_norm_2d
 
 from .pann_model import create_pann_model
 from .htsat import create_htsat_model
 from transformers import BertModel, RobertaModel, BartModel, RobertaConfig
-from transformers.tokenization_utils_base import BatchEncoding
 
 
 class MLPLayers(nn.Module):
@@ -240,6 +237,7 @@ class ModifiedResNet(nn.Module):
 
         return x
 
+
 class LayerNorm(nn.LayerNorm):
     """Subclass torch's LayerNorm to handle fp16."""
 
@@ -248,10 +246,12 @@ class LayerNorm(nn.LayerNorm):
         x = F.layer_norm(x, self.normalized_shape, self.weight, self.bias, self.eps)
         return x.to(orig_type)
 
+
 class QuickGELU(nn.Module):
     # NOTE This is slower than nn.GELU or nn.SiLU and uses more GPU memory
     def forward(self, x: torch.Tensor):
         return x * torch.sigmoid(1.702 * x)
+
 
 class ResidualAttentionBlock(nn.Module):
     def __init__(self, d_model: int, n_head: int, act_layer: Callable = nn.GELU):
@@ -278,6 +278,7 @@ class ResidualAttentionBlock(nn.Module):
         x = x + self.mlp(self.ln_2(x))
         return x
 
+
 class Transformer(nn.Module):
     def __init__(
         self, width: int, layers: int, heads: int, act_layer: Callable = nn.GELU
@@ -296,6 +297,7 @@ class Transformer(nn.Module):
         for r in self.resblocks:
             x = r(x, attn_mask=attn_mask)
         return x
+
 
 class VisualTransformer(nn.Module):
     def __init__(
@@ -413,6 +415,7 @@ class CLAPTextCfg:
     layers: int
     model_type: str
 
+
 class CLAP(nn.Module):
     def __init__(
         self,
@@ -508,7 +511,9 @@ class CLAP(nn.Module):
                 nn.Linear(self.joint_embed_shape, self.joint_embed_shape),
             )
         elif text_cfg.model_type == "roberta":
-            self.text_branch = RobertaModel(RobertaConfig.from_pretrained("roberta-base"))
+            self.text_branch = RobertaModel(
+                RobertaConfig.from_pretrained("roberta-base")
+            )
             self.text_transform = MLPLayers(
                 units=[
                     self.joint_embed_shape,
@@ -583,11 +588,11 @@ class CLAP(nn.Module):
                 nn.init.normal_(block.mlp.c_fc.weight, std=fc_std)
                 nn.init.normal_(block.mlp.c_proj.weight, std=proj_std)
         if self.text_branch_type == "bert" or self.text_branch_type == "roberta":
-            width = self.text_branch.embeddings.word_embeddings.weight.shape[-1]
+            self.text_branch.embeddings.word_embeddings.weight.shape[-1]
         elif self.text_branch_type == "bart":
-            width = self.text_branch.shared.weight.shape[-1]
+            self.text_branch.shared.weight.shape[-1]
         else:
-            width = self.text_branch.width
+            self.text_branch.width
         nn.init.constant_(self.logit_scale_a, np.log(1 / 0.07))
         nn.init.constant_(self.logit_scale_t, np.log(1 / 0.07))
 
@@ -867,10 +872,10 @@ def build_model_from_openai_state_dict(
     embed_dim = model_cfg["embed_dim"]
     audio_cfg = model_cfg["audio_cfg"]
     text_cfg = model_cfg["text_cfg"]
-    context_length = state_dict["positional_embedding"].shape[0]
-    vocab_size = state_dict["token_embedding.weight"].shape[0]
+    state_dict["positional_embedding"].shape[0]
+    state_dict["token_embedding.weight"].shape[0]
     transformer_width = state_dict["ln_final.weight"].shape[0]
-    transformer_heads = transformer_width // 64
+    transformer_width // 64
     transformer_layers = len(
         set(
             k.split(".")[2]

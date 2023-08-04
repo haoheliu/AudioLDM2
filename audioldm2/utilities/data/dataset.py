@@ -1,10 +1,8 @@
-
 import os
 import pandas as pd
 
 import audioldm2.utilities.audio as Audio
 from audioldm2.utilities.tools import load_json
-from audioldm2.utilities.data.add_on import *
 
 import random
 from torch.utils.data import Dataset
@@ -13,14 +11,15 @@ import torch
 import numpy as np
 import torchaudio
 
+
 class AudioDataset(Dataset):
     def __init__(
         self,
         config=None,
         split="train",
         waveform_only=False,
-        add_ons = [],
-        dataset_json_path=None # 
+        add_ons=[],
+        dataset_json_path=None,  #
     ):
         """
         Dataset that manages audio recordings
@@ -29,16 +28,16 @@ class AudioDataset(Dataset):
         """
         self.config = config
         self.split = split
-        self.pad_wav_start_sample = 0 # If none, random choose
+        self.pad_wav_start_sample = 0  # If none, random choose
         self.trim_wav = False
         self.waveform_only = waveform_only
         self.add_ons = [eval(x) for x in add_ons]
         print("Add-ons:", self.add_ons)
 
         self.build_setting_parameters()
-        
+
         # For an external dataset
-        if(dataset_json_path is not None):
+        if dataset_json_path is not None:
             assert type(dataset_json_path) == str
             print("Load metadata from %s" % dataset_json_path)
             self.data = load_json(dataset_json_path)["data"]
@@ -66,49 +65,53 @@ class AudioDataset(Dataset):
             label_vector,  # the one-hot representation of the audio class
             # the metadata of the sampled audio file and the mixup audio file (if exist)
             (datum, mix_datum),
-            random_start
+            random_start,
         ) = self.feature_extraction(index)
         text = self.get_sample_text_caption(datum, mix_datum, label_vector)
 
         data = {
             "text": text,  # list
-            "fname": self.text_to_filename(text) if(len(fname) == 0) else fname,  # list
+            "fname": self.text_to_filename(text)
+            if (len(fname) == 0)
+            else fname,  # list
             # tensor, [batchsize, class_num]
-            "label_vector": "" if(label_vector is None) else label_vector.float(), 
+            "label_vector": "" if (label_vector is None) else label_vector.float(),
             # tensor, [batchsize, 1, samples_num]
-            "waveform": "" if(waveform is None) else waveform.float(), 
+            "waveform": "" if (waveform is None) else waveform.float(),
             # tensor, [batchsize, t-steps, f-bins]
-            "stft": "" if(stft is None) else stft.float(),  
+            "stft": "" if (stft is None) else stft.float(),
             # tensor, [batchsize, t-steps, mel-bins]
-            "log_mel_spec": "" if(log_mel_spec is None) else log_mel_spec.float(),
+            "log_mel_spec": "" if (log_mel_spec is None) else log_mel_spec.float(),
             "duration": self.duration,
             "sampling_rate": self.sampling_rate,
-            "random_start_sample_in_original_audio_file": random_start
+            "random_start_sample_in_original_audio_file": random_start,
         }
 
         for add_on in self.add_ons:
             data.update(add_on(self.config, data, self.data[index]))
 
-        if(data["text"] is None):
+        if data["text"] is None:
             print("Warning: The model return None on key text", fname)
             data["text"] = ""
 
         return data
 
     def text_to_filename(self, text):
-        return text.replace(" ","_").replace("\'","_").replace("\"","_")
+        return text.replace(" ", "_").replace("'", "_").replace('"', "_")
 
     def get_dataset_root_path(self, dataset):
         assert dataset in self.metadata_root.keys()
         return self.metadata_root[dataset]
-    
+
     def get_dataset_metadata_path(self, dataset, key):
         # key: train, test, val, class_label_indices
         try:
             if dataset in self.metadata_root["metadata"]["path"].keys():
                 return self.metadata_root["metadata"]["path"][dataset][key]
         except:
-            raise ValueError("Dataset %s does not metadata \"%s\" specified" % (dataset, key))
+            raise ValueError(
+                'Dataset %s does not metadata "%s" specified' % (dataset, key)
+            )
             # return None
 
     def __len__(self):
@@ -127,20 +130,26 @@ class AudioDataset(Dataset):
             try:
                 label_indices = np.zeros(self.label_num, dtype=np.float32)
                 datum = self.data[index]
-                log_mel_spec, stft, mix_lambda, waveform, random_start = self.read_audio_file(
-                    datum["wav"]
-                )
+                (
+                    log_mel_spec,
+                    stft,
+                    mix_lambda,
+                    waveform,
+                    random_start,
+                ) = self.read_audio_file(datum["wav"])
                 mix_datum = None
-                if(self.label_num > 0 and "labels" in datum.keys()):
+                if self.label_num > 0 and "labels" in datum.keys():
                     for label_str in datum["labels"].split(","):
                         label_indices[int(self.index_dict[label_str])] = 1.0
-                
+
                 # If the key "label" is not in the metadata, return all zero vector
                 label_indices = torch.FloatTensor(label_indices)
                 break
             except Exception as e:
                 index = (index + 1) % len(self.data)
-                print("Error encounter during audio feature extraction: ", e, datum["wav"])
+                print(
+                    "Error encounter during audio feature extraction: ", e, datum["wav"]
+                )
                 continue
 
         # The filename of the wav file
@@ -149,7 +158,15 @@ class AudioDataset(Dataset):
         # waveform = torch.FloatTensor(waveform[..., : int(self.hopsize * t_step)])
         waveform = torch.FloatTensor(waveform)
 
-        return (fname, waveform, stft, log_mel_spec, label_indices, (datum, mix_datum), random_start)
+        return (
+            fname,
+            waveform,
+            stft,
+            log_mel_spec,
+            label_indices,
+            (datum, mix_datum),
+            random_start,
+        )
 
     # def augmentation(self, log_mel_spec):
     #     assert torch.min(log_mel_spec) < 0
@@ -199,7 +216,10 @@ class AudioDataset(Dataset):
         root_path = self.get_dataset_root_path(dataset_name)
         for i in range(len(metadata["data"])):
             assert "wav" in metadata["data"][i].keys(), metadata["data"][i]
-            assert metadata["data"][i]["wav"][0] != "/", "The dataset metadata should only contain relative path to the audio file: " + str(metadata["data"][i]["wav"]) 
+            assert metadata["data"][i]["wav"][0] != "/", (
+                "The dataset metadata should only contain relative path to the audio file: "
+                + str(metadata["data"][i]["wav"])
+            )
             metadata["data"][i]["wav"] = os.path.join(
                 root_path, metadata["data"][i]["wav"]
             )
@@ -209,13 +229,21 @@ class AudioDataset(Dataset):
         self.data = []
         print("Build dataset split %s from %s" % (self.split, self.dataset_name))
         if type(self.dataset_name) is str:
-            data_json = load_json(self.get_dataset_metadata_path(self.dataset_name, key=self.split))
-            data_json = self._relative_path_to_absolute_path(data_json, self.dataset_name)
+            data_json = load_json(
+                self.get_dataset_metadata_path(self.dataset_name, key=self.split)
+            )
+            data_json = self._relative_path_to_absolute_path(
+                data_json, self.dataset_name
+            )
             self.data = data_json["data"]
         elif type(self.dataset_name) is list:
             for dataset_name in self.dataset_name:
-                data_json = load_json(self.get_dataset_metadata_path(dataset_name, key=self.split))
-                data_json = self._relative_path_to_absolute_path(data_json, dataset_name)
+                data_json = load_json(
+                    self.get_dataset_metadata_path(dataset_name, key=self.split)
+                )
+                data_json = self._relative_path_to_absolute_path(
+                    data_json, dataset_name
+                )
                 self.data += data_json["data"]
         else:
             raise Exception("Invalid data format")
@@ -242,8 +270,11 @@ class AudioDataset(Dataset):
         id2label = {}
         id2num = {}
         num2label = {}
-        class_label_indices_path = self.get_dataset_metadata_path(dataset = self.config["data"]["class_label_indices"], key = "class_label_indices")
-        if(class_label_indices_path is not None):
+        class_label_indices_path = self.get_dataset_metadata_path(
+            dataset=self.config["data"]["class_label_indices"],
+            key="class_label_indices",
+        )
+        if class_label_indices_path is not None:
             df = pd.read_csv(class_label_indices_path)
             for _, row in df.iterrows():
                 index, mid, display_name = row["index"], row["mid"], row["display_name"]
@@ -286,9 +317,7 @@ class AudioDataset(Dataset):
         if (waveform_length - target_length) <= 0:
             return waveform, 0
 
-        random_start = int(
-            self.random_uniform(0, waveform_length - target_length)
-        )
+        random_start = int(self.random_uniform(0, waveform_length - target_length))
         return waveform[:, random_start : random_start + target_length], random_start
 
     def pad_wav(self, waveform, target_length):
@@ -300,10 +329,8 @@ class AudioDataset(Dataset):
 
         # Pad
         temp_wav = np.zeros((1, target_length), dtype=np.float32)
-        if(self.pad_wav_start_sample is None):
-            rand_start = int(
-                self.random_uniform(0, target_length - waveform_length)
-            )
+        if self.pad_wav_start_sample is None:
+            rand_start = int(self.random_uniform(0, target_length - waveform_length))
         else:
             rand_start = 0
 
@@ -348,7 +375,9 @@ class AudioDataset(Dataset):
         # waveform, sr = librosa.load(filename, sr=None, mono=True) # 4 times slower
         waveform, sr = torchaudio.load(filename)
 
-        waveform, random_start = self.random_segment_wav(waveform, target_length = int(sr * self.duration))
+        waveform, random_start = self.random_segment_wav(
+            waveform, target_length=int(sr * self.duration)
+        )
 
         waveform = self.resample(waveform, sr)
         # random_start = int(random_start * (self.sampling_rate / sr))
@@ -356,12 +385,14 @@ class AudioDataset(Dataset):
         waveform = waveform.numpy()[0, ...]
 
         waveform = self.normalize_wav(waveform)
-        
-        if(self.trim_wav):
+
+        if self.trim_wav:
             waveform = self.trim_wav(waveform)
 
         waveform = waveform[None, ...]
-        waveform = self.pad_wav(waveform, target_length = int(self.sampling_rate * self.duration))
+        waveform = self.pad_wav(
+            waveform, target_length=int(self.sampling_rate * self.duration)
+        )
         return waveform, random_start
 
     def mix_two_waveforms(self, waveform1, waveform2):
@@ -370,17 +401,21 @@ class AudioDataset(Dataset):
         return self.normalize_wav(mix_waveform), mix_lambda
 
     def read_audio_file(self, filename, filename2=None):
-        if(os.path.exists(filename)):
+        if os.path.exists(filename):
             waveform, random_start = self.read_wav_file(filename)
         else:
-            print("Warning [dataset.py]: The wav path \"", filename ,"\" is not find in the metadata. Use empty waveform instead.")
+            print(
+                'Warning [dataset.py]: The wav path "',
+                filename,
+                '" is not find in the metadata. Use empty waveform instead.',
+            )
             target_length = int(self.sampling_rate * self.duration)
             waveform = torch.zeros((1, target_length))
             random_start = 0
 
         mix_lambda = 0.0
         # log_mel_spec, stft = self.wav_feature_extraction_torchaudio(waveform) # this line is faster, but this implementation is not aligned with HiFi-GAN
-        if(not self.waveform_only):
+        if not self.waveform_only:
             log_mel_spec, stft = self.wav_feature_extraction(waveform)
         else:
             # Load waveform data only
@@ -440,12 +475,12 @@ class AudioDataset(Dataset):
 
     def _read_datum_caption(self, datum):
         caption_keys = [x for x in datum.keys() if ("caption" in x)]
-        random_index = torch.randint(0,len(caption_keys),(1,))[0].item()
+        random_index = torch.randint(0, len(caption_keys), (1,))[0].item()
         return datum[caption_keys[random_index]]
 
     def _is_contain_caption(self, datum):
         caption_keys = [x for x in datum.keys() if ("caption" in x)]
-        return len(caption_keys) > 0 
+        return len(caption_keys) > 0
 
     def label_indices_to_text(self, datum, label_indices):
         if self._is_contain_caption(datum):
@@ -462,7 +497,7 @@ class AudioDataset(Dataset):
                     labels += "%s, " % self.num2label[int(each)]
             return description_header + labels
         else:
-            return "" # TODO, if both label and caption are not provided, return empty string
+            return ""  # TODO, if both label and caption are not provided, return empty string
 
     def random_uniform(self, start, end):
         val = torch.rand(1).item()

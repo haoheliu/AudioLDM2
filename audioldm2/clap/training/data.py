@@ -1,7 +1,5 @@
-import ast
 import json
 import logging
-import math
 import os
 import random
 import h5py
@@ -10,20 +8,16 @@ import numpy as np
 import pandas as pd
 import torch
 import torchvision.datasets as datasets
-import webdataset as wds
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
 from torch.utils.data.distributed import DistributedSampler
-from functools import partial
 import soundfile as sf
 import io
 from pathlib import Path
 import wget
 
-from audioldm2.clap.open_clip.utils import get_tar_path_from_dataset_name, dataset_split
-from audioldm2.clap.open_clip.utils import load_p, load_class_label
-import tempfile
-import copy
+from audioldm2.clap.open_clip.utils import get_tar_path_from_dataset_name
+from audioldm2.clap.open_clip.utils import load_class_label
 
 try:
     import horovod.torch as hvd
@@ -37,13 +31,15 @@ except ImportError:
 
 from audioldm2.clap.open_clip import tokenize
 
+
 def tokenizer(text):
     return tokenize(text).squeeze(0)
 
 
-from transformers import RobertaTokenizer, RobertaConfig
+from transformers import RobertaTokenizer
 
 tokenize = RobertaTokenizer.from_pretrained("roberta-base")
+
 
 def tokenizer(text):
     result = tokenize(
@@ -402,6 +398,7 @@ def sample_prop(sizefile, inputs, proportion, is_local=True):
         sampled_size_dict,
     )
 
+
 def get_mel(audio_data, audio_cfg):
     # mel shape: (n_mels, T)
     mel = torchaudio.transforms.MelSpectrogram(
@@ -437,7 +434,7 @@ def get_audio_features(
     audio_cfg: a dict containing audio configuration. Comes from model_cfg['audio_cfg'].
     """
     sample = {}
-    
+
     # assert audio_data.size(-1) <= max_len, str(audio_data.size())
 
     # split to three parts
@@ -446,7 +443,7 @@ def get_audio_features(
     )  # the +1 related to how the spectrogram is computed
     mel = mel[:chunk_frames]
 
-    audio_data = audio_data[..., : max_len]
+    audio_data = audio_data[..., :max_len]
     sample["mel_fusion"] = mel
     longer = torch.tensor([True])
 

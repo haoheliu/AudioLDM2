@@ -1,7 +1,5 @@
 from abc import abstractmethod
-from functools import partial
 import math
-from typing import Iterable
 
 import numpy as np
 import torch as th
@@ -73,6 +71,7 @@ class TimestepBlock(nn.Module):
         Apply the module to `x` given `emb` timestep embeddings.
         """
 
+
 class TimestepEmbedSequential(nn.Sequential, TimestepBlock):
     """
     A sequential module that passes timestep embeddings to the children that
@@ -89,11 +88,14 @@ class TimestepEmbedSequential(nn.Sequential, TimestepBlock):
             if isinstance(layer, TimestepBlock):
                 x = layer(x, emb)
             elif isinstance(layer, SpatialTransformer):
-                if(spatial_transformer_id >= len(context_list)):
+                if spatial_transformer_id >= len(context_list):
                     context, mask = None, None
                 else:
-                    context, mask = context_list[spatial_transformer_id], mask_list[spatial_transformer_id]
-                    
+                    context, mask = (
+                        context_list[spatial_transformer_id],
+                        mask_list[spatial_transformer_id],
+                    )
+
                 x = layer(x, context, mask=mask)
                 spatial_transformer_id += 1
             else:
@@ -483,7 +485,7 @@ class UNetModel(nn.Module):
         channel_mult=(1, 2, 4, 8),
         conv_resample=True,
         dims=2,
-        extra_sa_layer = True,
+        extra_sa_layer=True,
         num_classes=None,
         extra_film_condition_dim=None,
         use_checkpoint=False,
@@ -545,9 +547,7 @@ class UNetModel(nn.Module):
         if self.num_classes is not None:
             self.label_emb = nn.Embedding(num_classes, time_embed_dim)
 
-        self.use_extra_film_by_concat = (
-            self.extra_film_condition_dim is not None 
-        )
+        self.use_extra_film_by_concat = self.extra_film_condition_dim is not None
 
         if self.extra_film_condition_dim is not None:
             self.film_emb = nn.Linear(self.extra_film_condition_dim, time_embed_dim)
@@ -561,10 +561,10 @@ class UNetModel(nn.Module):
                 use_spatial_transformer
             ), "Fool!! You forgot to use the spatial transformer for your cross-attention conditioning..."
 
-        if(context_dim is not None and not isinstance(context_dim, list)):
+        if context_dim is not None and not isinstance(context_dim, list):
             context_dim = [context_dim]
-        elif(context_dim is None):
-            context_dim = [None] # At least use one spatial transformer
+        elif context_dim is None:
+            context_dim = [None]  # At least use one spatial transformer
 
         self.input_blocks = nn.ModuleList(
             [
@@ -605,15 +605,16 @@ class UNetModel(nn.Module):
                             if use_spatial_transformer
                             else num_head_channels
                         )
-                    if(extra_sa_layer):
-                        layers.append(SpatialTransformer(
-                                    ch,
-                                    num_heads,
-                                    dim_head,
-                                    depth=transformer_depth,
-                                    context_dim=None
-                                )
+                    if extra_sa_layer:
+                        layers.append(
+                            SpatialTransformer(
+                                ch,
+                                num_heads,
+                                dim_head,
+                                depth=transformer_depth,
+                                context_dim=None,
                             )
+                        )
                     for context_dim_id in range(len(context_dim)):
                         layers.append(
                             AttentionBlock(
@@ -629,7 +630,7 @@ class UNetModel(nn.Module):
                                 num_heads,
                                 dim_head,
                                 depth=transformer_depth,
-                                context_dim=context_dim[context_dim_id]
+                                context_dim=context_dim[context_dim_id],
                             )
                         )
                 self.input_blocks.append(TimestepEmbedSequential(*layers))
@@ -682,32 +683,29 @@ class UNetModel(nn.Module):
                 use_scale_shift_norm=use_scale_shift_norm,
             )
         ]
-        if(extra_sa_layer):
-            middle_layers.append(SpatialTransformer(
-                                    ch,
-                                    num_heads,
-                                    dim_head,
-                                    depth=transformer_depth,
-                                    context_dim=None
-                                )
-                            )
+        if extra_sa_layer:
+            middle_layers.append(
+                SpatialTransformer(
+                    ch, num_heads, dim_head, depth=transformer_depth, context_dim=None
+                )
+            )
         for context_dim_id in range(len(context_dim)):
             middle_layers.append(
-            AttentionBlock(
-                ch,
-                use_checkpoint=use_checkpoint,
-                num_heads=num_heads,
-                num_head_channels=dim_head,
-                use_new_attention_order=use_new_attention_order,
-            )
-            if not use_spatial_transformer
-            else SpatialTransformer(
-                ch,
-                num_heads,
-                dim_head,
-                depth=transformer_depth,
-                context_dim=context_dim[context_dim_id]
-            )
+                AttentionBlock(
+                    ch,
+                    use_checkpoint=use_checkpoint,
+                    num_heads=num_heads,
+                    num_head_channels=dim_head,
+                    use_new_attention_order=use_new_attention_order,
+                )
+                if not use_spatial_transformer
+                else SpatialTransformer(
+                    ch,
+                    num_heads,
+                    dim_head,
+                    depth=transformer_depth,
+                    context_dim=context_dim[context_dim_id],
+                )
             )
         middle_layers.append(
             ResBlock(
@@ -756,14 +754,15 @@ class UNetModel(nn.Module):
                             if use_spatial_transformer
                             else num_head_channels
                         )
-                    if(extra_sa_layer):
-                        layers.append(SpatialTransformer(
-                                    ch,
-                                    num_heads,
-                                    dim_head,
-                                    depth=transformer_depth,
-                                    context_dim=None
-                                )
+                    if extra_sa_layer:
+                        layers.append(
+                            SpatialTransformer(
+                                ch,
+                                num_heads,
+                                dim_head,
+                                depth=transformer_depth,
+                                context_dim=None,
+                            )
                         )
                     for context_dim_id in range(len(context_dim)):
                         layers.append(
@@ -780,7 +779,7 @@ class UNetModel(nn.Module):
                                 num_heads,
                                 dim_head,
                                 depth=transformer_depth,
-                                context_dim=context_dim[context_dim_id]
+                                context_dim=context_dim[context_dim_id],
                             )
                         )
                 if level and i == num_res_blocks:
@@ -835,7 +834,15 @@ class UNetModel(nn.Module):
         self.middle_block.apply(convert_module_to_f32)
         self.output_blocks.apply(convert_module_to_f32)
 
-    def forward(self, x, timesteps=None, y=None, context_list=None, context_attn_mask_list=None, **kwargs):
+    def forward(
+        self,
+        x,
+        timesteps=None,
+        y=None,
+        context_list=None,
+        context_attn_mask_list=None,
+        **kwargs,
+    ):
         """
         Apply the model to an input batch.
         :param x: an [N x C x ...] Tensor of inputs.
@@ -867,7 +874,7 @@ class UNetModel(nn.Module):
             h = module(h, emb, context_list, context_attn_mask_list)
             hs.append(h)
         h = self.middle_block(h, emb, context_list, context_attn_mask_list)
-        for module in self.output_blocks: 
+        for module in self.output_blocks:
             concate_tensor = hs.pop()
             h = th.cat([h, concate_tensor], dim=1)
             h = module(h, emb, context_list, context_attn_mask_list)

@@ -7,7 +7,6 @@
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from itertools import repeat
 import collections.abc
 import math

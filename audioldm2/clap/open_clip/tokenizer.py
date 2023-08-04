@@ -12,6 +12,7 @@ import ftfy
 import regex as re
 import torch
 
+
 @lru_cache()
 def default_bpe():
     return os.path.join(

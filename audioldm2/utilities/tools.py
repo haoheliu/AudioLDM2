@@ -41,15 +41,18 @@ MD5_MAP = {
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+
 def load_json(fname):
-    with open(fname,'r') as f:
+    with open(fname, "r") as f:
         data = json.load(f)
         return data
+
 
 def read_json(dataset_json_file):
     with open(dataset_json_file, "r") as fp:
         data_json = json.load(fp)
     return data_json["data"]
+
 
 def copy_test_subset_data(metadata, testset_copy_target_path):
     # metadata = read_json(testset_metadata)
@@ -69,10 +72,12 @@ def copy_test_subset_data(metadata, testset_copy_target_path):
         cmd = "cp {} {}".format(each["wav"], os.path.join(testset_copy_target_path))
         os.system(cmd)
 
+
 def listdir_nohidden(path):
     for f in os.listdir(path):
         if not f.startswith("."):
             yield f
+
 
 def get_restore_step(path):
     checkpoints = os.listdir(path)

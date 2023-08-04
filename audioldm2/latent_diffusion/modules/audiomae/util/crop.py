@@ -19,6 +19,7 @@ class RandomResizedCrop(transforms.RandomResizedCrop):
     Following BYOL's TF code:
     https://github.com/deepmind/deepmind-research/blob/master/byol/utils/dataset.py#L206
     """
+
     @staticmethod
     def get_params(img, scale, ratio):
         width, height = F._get_image_size(img)

@@ -317,11 +317,6 @@ def load_json(name):
     return data
 
 
-from multiprocessing import Process, Manager
-from multiprocessing import Process, Value, Array
-from ctypes import c_wchar
-
-
 def load_class_label(path):
     # https://stackoverflow.com/questions/48004243/how-to-share-large-read-only-dictionary-list-across-processes-in-multiprocessing
     # https://stackoverflow.com/questions/45693949/storing-strings-in-a-multiprocessing-sharedctypes-array
