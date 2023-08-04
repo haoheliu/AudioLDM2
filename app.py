@@ -14,32 +14,14 @@ hf_hub_download(repo_id="haoheliu/audioldm2-full", filename="audioldm2-full.pth"
 audioldm = None
 current_model_name = None
 
-# def predict(input, history=[]):
-#     # tokenize the new input sentence
-#     new_user_input_ids = tokenizer.encode(input + tokenizer.eos_token, return_tensors='pt')
-
-#     # append the new user input tokens to the chat history
-#     bot_input_ids = torch.cat([torch.LongTensor(history), new_user_input_ids], dim=-1)
-
-#     # generate a response
-#     history = model.generate(bot_input_ids, max_length=1000, pad_token_id=tokenizer.eos_token_id).tolist()
-
-#     # convert the tokens to text, and then split the responses into lines
-#     response = tokenizer.decode(history[0]).split("<|endoftext|>")
-#     response = [(response[i], response[i+1]) for i in range(0, len(response)-1, 2)]  # convert to tuples of list
-#     return response, history
-
-
 def text2audio(
     text,
-    duration,
     guidance_scale,
     random_seed,
     n_candidates,
     model_name="audioldm2-full",
 ):
     global audioldm, current_model_name
-
     torch.set_float32_matmul_precision("high")
 
     if audioldm is None or model_name != current_model_name:
@@ -52,7 +34,7 @@ def text2audio(
         latent_diffusion=audioldm,
         text=text,
         seed=random_seed,
-        duration=duration,
+        duration=10,
         guidance_scale=guidance_scale,
         n_candidate_gen_per_text=int(n_candidates),
     )  # [bs, 1, samples]
@@ -63,7 +45,6 @@ def text2audio(
     if len(waveform) == 1:
         waveform = waveform[0]
     return waveform
-
 
 css = """
         a {
@@ -216,7 +197,7 @@ with iface:
                 "
               >
                 <h1 style="font-weight: 900; margin-bottom: 7px; line-height: normal;">
-                  AudioLDM: Text-to-Audio Generation with Latent Diffusion Models
+                  AudioLDM 2: A General Framework for Audio, Music, and Speech Generation
                 </h1>
               </div>
               <p style="margin-bottom: 10px; font-size: 94%">
@@ -228,11 +209,11 @@ with iface:
     gr.HTML(
         """
         <h1 style="font-weight: 900; margin-bottom: 7px;">
-        AudioLDM: Text-to-Audio Generation with Latent Diffusion Models
+        AudioLDM 2: A General Framework for Audio, Music, and Speech Generation
         </h1>
         <p>For faster inference without waiting in queue, you may duplicate the space and upgrade to GPU in settings.
         <br/>
-        <a href="https://huggingface.co/spaces/haoheliu/audioldm-text-to-audio-generation?duplicate=true">
+        <a href="https://huggingface.co/spaces/haoheliu/audioldm2-text2audio-text2music?duplicate=true">
         <img style="margin-top: 0em; margin-bottom: 0em" src="https://bit.ly/3gLdBN6" alt="Duplicate Space"></a>
         <p/>
     """
@@ -241,7 +222,7 @@ with iface:
         with gr.Box():
             ############# Input
             textbox = gr.Textbox(
-                value="A hammer is hitting a wooden surface",
+                value="A forest of wind chimes singing a soothing melody in the breeze.",
                 max_lines=1,
                 label="Input your text here. Your text is important for the audio quality. Please ensure it is descriptive by using more adjectives.",
                 elem_id="prompt-in",
@@ -252,9 +233,9 @@ with iface:
                     value=45,
                     label="Change this value (any integer number) will lead to a different generation result.",
                 )
-                duration = gr.Slider(
-                    10, 10, value=10, step=2.5, label="Duration (seconds)"
-                )
+                # duration = gr.Slider(
+                #     10, 10, value=10, step=2.5, label="Duration (seconds)"
+                # )
                 guidance_scale = gr.Slider(
                     0,
                     6,
@@ -294,7 +275,7 @@ with iface:
         #           textbox, duration, guidance_scale, seed, n_candidates, model_name], outputs=[outputs])
         btn.click(
             text2audio,
-            inputs=[textbox, duration, guidance_scale, seed, n_candidates],
+            inputs=[textbox, guidance_scale, seed, n_candidates],
             outputs=[outputs],
         )
 
@@ -313,40 +294,35 @@ with iface:
         gr.Examples(
             [
                 [
-                    "A hammer is hitting a wooden surface",
-                    10,
+                    "An excited crowd cheering at a sports game.",
                     3.5,
                     45,
                     3,
                     "audioldm2-full",
                 ],
                 [
-                    "Peaceful and calming ambient music with singing bowl and other instruments.",
-                    10,
+                    "A cat is meowing for attention.",
                     3.5,
                     45,
                     3,
                     "audioldm2-full",
                 ],
                 [
-                    "A man is speaking in a small room.",
-                    10,
+                    "Birds singing sweetly in a blooming garden.",
                     3.5,
                     45,
                     3,
                     "audioldm2-full",
                 ],
                 [
-                    "A female is speaking followed by footstep sound",
-                    10,
+                    "A modern synthesizer creating futuristic soundscapes.",
                     3.5,
                     45,
                     3,
                     "audioldm2-full",
                 ],
                 [
-                    "Wooden table tapping sound followed by water pouring sound.",
-                    10,
+                    "The vibrant beat of Brazilian samba drums.",
                     3.5,
                     45,
                     3,
@@ -355,7 +331,7 @@ with iface:
             ],
             fn=text2audio,
             # inputs=[textbox, duration, guidance_scale, seed, n_candidates, model_name],
-            inputs=[textbox, duration, guidance_scale, seed, n_candidates],
+            inputs=[textbox, guidance_scale, seed, n_candidates],
             outputs=[outputs],
             cache_examples=True,
         )
@@ -369,6 +345,7 @@ with iface:
                 </div>
                 """
         )
+
         with gr.Accordion("Additional information", open=False):
             gr.HTML(
                 """
@@ -379,6 +356,6 @@ with iface:
             )
 # <p>This demo is strictly for research demo purpose only. For commercial use please <a href="haoheliu@gmail.com">contact us</a>.</p>
 
-iface.queue(concurrency_count=2)
+iface.queue(concurrency_count=3)
 # iface.launch(debug=True)
 iface.launch(debug=True, share=True)

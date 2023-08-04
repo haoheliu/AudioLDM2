@@ -170,18 +170,6 @@ def duration_to_latent_t_size(duration):
     return int(duration * 25.6)
 
 
-def set_cond_audio(latent_diffusion):
-    latent_diffusion.cond_stage_key = "waveform"
-    latent_diffusion.cond_stage_model.embed_mode = "audio"
-    return latent_diffusion
-
-
-def set_cond_text(latent_diffusion):
-    latent_diffusion.cond_stage_key = "text"
-    latent_diffusion.cond_stage_model.embed_mode = "text"
-    return latent_diffusion
-
-
 def text_to_audio(
     latent_diffusion,
     text,
@@ -207,13 +195,13 @@ def text_to_audio(
 
     latent_diffusion.latent_t_size = duration_to_latent_t_size(duration)
 
-    if waveform is not None:
-        print(
-            "Generate audio that has similar content as %s" % original_audio_file_path
-        )
+    # if waveform is not None:
+    #     print(
+    #         "Generate audio that has similar content as %s" % original_audio_file_path
+    #     )
         # latent_diffusion = set_cond_audio(latent_diffusion)
-    else:
-        print("Generate audio using text %s" % text)
+    # else:
+    #     print("Generate audio using text %s" % text)
         # latent_diffusion = set_cond_text(latent_diffusion)
 
     with torch.no_grad():
