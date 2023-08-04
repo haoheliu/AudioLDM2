@@ -1,0 +1,2 @@
+include *.py LICENSE README.md
+recursive-include audioldm2 *.txt *.py *.gz *.npy *.json

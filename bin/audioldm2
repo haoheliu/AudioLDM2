@@ -108,15 +108,6 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "-dur",
-    "--duration",
-    type=float,
-    required=False,
-    default=10.0,
-    help="The duration of the samples",
-)
-
-parser.add_argument(
     "-n",
     "--n_candidate_gen_per_text",
     type=int,
@@ -139,8 +130,6 @@ torch.set_float32_matmul_precision("high")
 
 if(args.ckpt_path is not None):
     print("Warning: ckpt_path has no effect after version 0.0.20.")
-    
-assert args.duration % 2.5 == 0, "Duration must be a multiple of 2.5"
 
 mode = args.mode
 if(mode == "generation" and args.file_path is not None):
@@ -175,21 +164,5 @@ if(args.mode == "generation"):
         n_candidate_gen_per_text=n_candidate_gen_per_text,
         batchsize=args.batchsize,
     )
-    
-# elif(args.mode == "transfer"):
-#     assert args.file_path is not None
-#     assert os.path.exists(args.file_path), "The original audio file \'%s\' for style transfer does not exist." % args.file_path
-#     waveform = style_transfer(
-#         audioldm,
-#         text,
-#         args.file_path,
-#         args.transfer_strength,
-#         random_seed,
-#         duration=duration,
-#         guidance_scale=guidance_scale,
-#         ddim_steps=args.ddim_steps,
-#         batchsize=args.batchsize,
-#     )
-#     waveform = waveform[:,None,:]
 
 save_wave(waveform, save_path, name="%s_%s" % (get_time(), text))

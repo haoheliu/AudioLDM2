@@ -176,6 +176,8 @@ def text_to_audio(
     n_candidate_gen_per_text=3,
     config=None,
 ):
+    assert duration == 10, "Error: Currently we only support 10 seconds of generation. Generating longer files requires some extra coding, which would be a part of the future work."
+    
     seed_everything(int(seed))
     waveform = None
     if(original_audio_file_path is not None):

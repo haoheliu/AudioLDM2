@@ -6,15 +6,10 @@ import os
 import random
 import h5py
 from dataclasses import dataclass
-from audioldm2.clap.training.params import parse_args
-import braceexpand
 import numpy as np
 import pandas as pd
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 import torchvision.datasets as datasets
-import torchvision.transforms
 import webdataset as wds
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
@@ -252,57 +247,57 @@ def preprocess_txt(text):
     return tokenize([str(text)])[0]
 
 
-def get_dataset_size(shards, sizefilepath_=None, is_local=True):
-    if isinstance(shards, list):
-        size_list = []
-        for s in shards:
-            size_list.append(
-                get_dataset_size(s, sizefilepath_=sizefilepath_, is_local=is_local)[0]
-            )
-    else:
-        if not is_local:
-            for n in dataset_split.keys():
-                if n in shards.split("/"):
-                    break
-            for s in dataset_split[n]:
-                if s in shards.split("/"):
-                    break
-            sizefilepath_ = f"./json_files/{n}/{s}/sizes.json"
-        shards_list = list(braceexpand.braceexpand(shards))
-        dir_path = os.path.dirname(shards)
-        if sizefilepath_ is not None:
-            sizes = json.load(open(sizefilepath_, "r"))
-            total_size = sum(
-                [
-                    int(sizes[os.path.basename(shard.replace(".tar -", ".tar"))])
-                    for shard in shards_list
-                ]
-            )
-        else:
-            sizes_filename = os.path.join(dir_path, "sizes.json")
-            len_filename = os.path.join(dir_path, "__len__")
-            if os.path.exists(sizes_filename):
-                sizes = json.load(open(sizes_filename, "r"))
-                total_size = sum(
-                    [int(sizes[os.path.basename(shard)]) for shard in shards_list]
-                )
-            elif os.path.exists(len_filename):
-                # FIXME this used to be eval(open(...)) but that seemed rather unsafe
-                total_size = ast.literal_eval(open(len_filename, "r").read())
-            else:
-                raise Exception(
-                    "Cannot find sizes file for dataset. Please specify the path to the file."
-                )
-                # total_size = None  # num samples undefined
-                # some common dataset sizes (at time of authors last download)
-                # cc3m-train: 2905954
-                # cc12m: 10968539
-                # LAION-400m: 407332084
-        num_shards = len(shards_list)
-    if isinstance(shards, list):
-        return sum(size_list), len(shards)
-    else:
-        return total_size, num_shards
+# def get_dataset_size(shards, sizefilepath_=None, is_local=True):
+#     if isinstance(shards, list):
+#         size_list = []
+#         for s in shards:
+#             size_list.append(
+#                 get_dataset_size(s, sizefilepath_=sizefilepath_, is_local=is_local)[0]
+#             )
+#     else:
+#         if not is_local:
+#             for n in dataset_split.keys():
+#                 if n in shards.split("/"):
+#                     break
+#             for s in dataset_split[n]:
+#                 if s in shards.split("/"):
+#                     break
+#             sizefilepath_ = f"./json_files/{n}/{s}/sizes.json"
+#         shards_list = list(braceexpand.braceexpand(shards))
+#         dir_path = os.path.dirname(shards)
+#         if sizefilepath_ is not None:
+#             sizes = json.load(open(sizefilepath_, "r"))
+#             total_size = sum(
+#                 [
+#                     int(sizes[os.path.basename(shard.replace(".tar -", ".tar"))])
+#                     for shard in shards_list
+#                 ]
+#             )
+#         else:
+#             sizes_filename = os.path.join(dir_path, "sizes.json")
+#             len_filename = os.path.join(dir_path, "__len__")
+#             if os.path.exists(sizes_filename):
+#                 sizes = json.load(open(sizes_filename, "r"))
+#                 total_size = sum(
+#                     [int(sizes[os.path.basename(shard)]) for shard in shards_list]
+#                 )
+#             elif os.path.exists(len_filename):
+#                 # FIXME this used to be eval(open(...)) but that seemed rather unsafe
+#                 total_size = ast.literal_eval(open(len_filename, "r").read())
+#             else:
+#                 raise Exception(
+#                     "Cannot find sizes file for dataset. Please specify the path to the file."
+#                 )
+#                 # total_size = None  # num samples undefined
+#                 # some common dataset sizes (at time of authors last download)
+#                 # cc3m-train: 2905954
+#                 # cc12m: 10968539
+#                 # LAION-400m: 407332084
+#         num_shards = len(shards_list)
+#     if isinstance(shards, list):
+#         return sum(size_list), len(shards)
+#     else:
+#         return total_size, num_shards
 
 
 def get_imagenet(args, preprocess_fns, split):
@@ -571,155 +566,155 @@ def collate_fn(batch):
     return batch_dict
 
 
-def get_wds_dataset(
-    args,
-    model_cfg,
-    is_train,
-    audio_ext="flac",
-    text_ext="json",
-    max_len=480000,
-    proportion=1.0,
-    sizefilepath_=None,
-    is_local=None,
-):
-    """
-    Get a dataset for wdsdataloader.
-    """
-    if is_local is None and (not args.remotedata is None):
-        is_local = not args.remotedata
+# def get_wds_dataset(
+#     args,
+#     model_cfg,
+#     is_train,
+#     audio_ext="flac",
+#     text_ext="json",
+#     max_len=480000,
+#     proportion=1.0,
+#     sizefilepath_=None,
+#     is_local=None,
+# ):
+#     """
+#     Get a dataset for wdsdataloader.
+#     """
+#     if is_local is None and (not args.remotedata is None):
+#         is_local = not args.remotedata
 
-    input_shards = args.train_data if is_train else args.val_data
-    assert input_shards is not None
+#     input_shards = args.train_data if is_train else args.val_data
+#     assert input_shards is not None
 
-    if not sizefilepath_ is None:
-        sizefilepath = sizefilepath_
-    else:
-        sizefilepath = os.path.join(os.path.dirname(input_shards[0]), "sizes.json")
+#     if not sizefilepath_ is None:
+#         sizefilepath = sizefilepath_
+#     else:
+#         sizefilepath = os.path.join(os.path.dirname(input_shards[0]), "sizes.json")
 
-    if proportion != 1.0:
-        num_samples, num_shards, input_shards, _ = sample_prop(
-            sizefilepath, input_shards, proportion, is_local=is_local
-        )
-    else:
-        num_samples, num_shards = get_dataset_size(
-            input_shards, sizefilepath_=sizefilepath_, is_local=is_local
-        )
+#     if proportion != 1.0:
+#         num_samples, num_shards, input_shards, _ = sample_prop(
+#             sizefilepath, input_shards, proportion, is_local=is_local
+#         )
+#     else:
+#         num_samples, num_shards = get_dataset_size(
+#             input_shards, sizefilepath_=sizefilepath_, is_local=is_local
+#         )
 
-    if not num_samples:
-        if is_train:
-            num_samples = args.train_num_samples
-            if not num_samples:
-                raise RuntimeError(
-                    "Currently, number of dataset samples must be specified for training dataset. "
-                    "Please specify via `--train-num-samples` if no dataset length info present."
-                )
-        else:
-            num_samples = (
-                args.val_num_samples or 0
-            )  # eval will just exhaust the iterator if not specified
+#     if not num_samples:
+#         if is_train:
+#             num_samples = args.train_num_samples
+#             if not num_samples:
+#                 raise RuntimeError(
+#                     "Currently, number of dataset samples must be specified for training dataset. "
+#                     "Please specify via `--train-num-samples` if no dataset length info present."
+#                 )
+#         else:
+#             num_samples = (
+#                 args.val_num_samples or 0
+#             )  # eval will just exhaust the iterator if not specified
 
-    pipeline = [wds.SimpleShardList(input_shards)]
-    # at this point we have an iterator over all the shards
-    # TODO: (yusong): add a if statement of distributed. If not, we don't need to split_by_node
-    if is_train or args.parallel_eval:
-        pipeline.extend(
-            [
-                wds.detshuffle(
-                    bufsize=_SHARD_SHUFFLE_SIZE,
-                    initial=_SHARD_SHUFFLE_INITIAL,
-                    seed=args.seed,
-                ),
-                wds.split_by_node,
-                wds.split_by_worker,
-                # at this point, we have an iterator over the shards assigned to each worker at each node
-                wds.tarfile_to_samples(handler=log_and_continue),
-                wds.shuffle(
-                    bufsize=_SAMPLE_SHUFFLE_SIZE,
-                    initial=_SAMPLE_SHUFFLE_INITIAL,
-                    rng=random.Random(args.seed),
-                ),
-                # wds.repeatedly,  # FIXME determine if this is beneficial
-            ]
-        )
-    else:
-        pipeline.extend(
-            [
-                wds.split_by_worker,
-                # at this point, we have an iterator over the shards assigned to each worker
-                wds.tarfile_to_samples(handler=log_and_continue),
-            ]
-        )
-    pipeline.append(
-        wds.map(
-            partial(
-                preprocess,
-                audio_ext=audio_ext,
-                text_ext=text_ext,
-                max_len=max_len,
-                audio_cfg=model_cfg["audio_cfg"],
-                class_index_dict=copy.deepcopy(args.class_index_dict),
-                data_filling=args.data_filling,
-                data_truncating=args.data_truncating,
-                text_augment_selection=args.text_augment_selection,
-            )
-        ),
-    )
+#     pipeline = [wds.SimpleShardList(input_shards)]
+#     # at this point we have an iterator over all the shards
+#     # TODO: (yusong): add a if statement of distributed. If not, we don't need to split_by_node
+#     if is_train or args.parallel_eval:
+#         pipeline.extend(
+#             [
+#                 wds.detshuffle(
+#                     bufsize=_SHARD_SHUFFLE_SIZE,
+#                     initial=_SHARD_SHUFFLE_INITIAL,
+#                     seed=args.seed,
+#                 ),
+#                 wds.split_by_node,
+#                 wds.split_by_worker,
+#                 # at this point, we have an iterator over the shards assigned to each worker at each node
+#                 wds.tarfile_to_samples(handler=log_and_continue),
+#                 wds.shuffle(
+#                     bufsize=_SAMPLE_SHUFFLE_SIZE,
+#                     initial=_SAMPLE_SHUFFLE_INITIAL,
+#                     rng=random.Random(args.seed),
+#                 ),
+#                 # wds.repeatedly,  # FIXME determine if this is beneficial
+#             ]
+#         )
+#     else:
+#         pipeline.extend(
+#             [
+#                 wds.split_by_worker,
+#                 # at this point, we have an iterator over the shards assigned to each worker
+#                 wds.tarfile_to_samples(handler=log_and_continue),
+#             ]
+#         )
+#     pipeline.append(
+#         wds.map(
+#             partial(
+#                 preprocess,
+#                 audio_ext=audio_ext,
+#                 text_ext=text_ext,
+#                 max_len=max_len,
+#                 audio_cfg=model_cfg["audio_cfg"],
+#                 class_index_dict=copy.deepcopy(args.class_index_dict),
+#                 data_filling=args.data_filling,
+#                 data_truncating=args.data_truncating,
+#                 text_augment_selection=args.text_augment_selection,
+#             )
+#         ),
+#     )
 
-    pipeline.append(
-        wds.batched(
-            args.batch_size,
-            partial=not (is_train or args.parallel_eval),
-            collation_fn=collate_fn,
-        )
-    )
+#     pipeline.append(
+#         wds.batched(
+#             args.batch_size,
+#             partial=not (is_train or args.parallel_eval),
+#             collation_fn=collate_fn,
+#         )
+#     )
 
-    dataset = wds.DataPipeline(*pipeline)
-    if is_train or args.parallel_eval:
-        # (yusong): Currently parallel evaluation will be not precise as we are repeat the last few samples.
-        # (yusong): See comments below.
-        # roll over and repeat a few samples to get same number of full batches on each node
-        global_batch_size = args.batch_size * args.world_size
-        num_batches = math.ceil(num_samples / global_batch_size)
-        num_workers = max(1, args.workers)
-        num_worker_batches = math.ceil(
-            num_batches / num_workers
-        )  # per dataloader worker
-        num_batches = num_worker_batches * num_workers
-        num_samples = num_batches * global_batch_size
-        dataset = dataset.with_epoch(
-            num_worker_batches
-        )  # each worker is iterating over this
-    else:
-        # last batches are partial, eval is done on single (master) node
-        num_batches = math.ceil(num_samples / args.batch_size)
+#     dataset = wds.DataPipeline(*pipeline)
+#     if is_train or args.parallel_eval:
+#         # (yusong): Currently parallel evaluation will be not precise as we are repeat the last few samples.
+#         # (yusong): See comments below.
+#         # roll over and repeat a few samples to get same number of full batches on each node
+#         global_batch_size = args.batch_size * args.world_size
+#         num_batches = math.ceil(num_samples / global_batch_size)
+#         num_workers = max(1, args.workers)
+#         num_worker_batches = math.ceil(
+#             num_batches / num_workers
+#         )  # per dataloader worker
+#         num_batches = num_worker_batches * num_workers
+#         num_samples = num_batches * global_batch_size
+#         dataset = dataset.with_epoch(
+#             num_worker_batches
+#         )  # each worker is iterating over this
+#     else:
+#         # last batches are partial, eval is done on single (master) node
+#         num_batches = math.ceil(num_samples / args.batch_size)
 
-    kwargs = {}
-    if args.horovod:  # multi-node training on summit
-        kwargs["multiprocessing_context"] = "forkserver"
+#     kwargs = {}
+#     if args.horovod:  # multi-node training on summit
+#         kwargs["multiprocessing_context"] = "forkserver"
 
-    dataloader = wds.WebLoader(
-        dataset, batch_size=None, shuffle=False, num_workers=args.workers, **kwargs
-    )
+#     dataloader = wds.WebLoader(
+#         dataset, batch_size=None, shuffle=False, num_workers=args.workers, **kwargs
+#     )
 
-    # FIXME not clear which approach is better, with_epoch before vs after dataloader?
-    # hoping to resolve via https://github.com/webdataset/webdataset/issues/169
-    # if is_train:
-    #     # roll over and repeat a few samples to get same number of full batches on each node
-    #     global_batch_size = args.batch_size * args.world_size
-    #     num_batches = math.ceil(num_samples / global_batch_size)
-    #     num_workers = max(1, args.workers)
-    #     num_batches = math.ceil(num_batches / num_workers) * num_workers
-    #     num_samples = num_batches * global_batch_size
-    #     dataloader = dataloader.with_epoch(num_batches)
-    # else:
-    #     # last batches are partial, eval is done on single (master) node
-    #     num_batches = math.ceil(num_samples / args.batch_size)
+#     # FIXME not clear which approach is better, with_epoch before vs after dataloader?
+#     # hoping to resolve via https://github.com/webdataset/webdataset/issues/169
+#     # if is_train:
+#     #     # roll over and repeat a few samples to get same number of full batches on each node
+#     #     global_batch_size = args.batch_size * args.world_size
+#     #     num_batches = math.ceil(num_samples / global_batch_size)
+#     #     num_workers = max(1, args.workers)
+#     #     num_batches = math.ceil(num_batches / num_workers) * num_workers
+#     #     num_samples = num_batches * global_batch_size
+#     #     dataloader = dataloader.with_epoch(num_batches)
+#     # else:
+#     #     # last batches are partial, eval is done on single (master) node
+#     #     num_batches = math.ceil(num_samples / args.batch_size)
 
-    # add meta-data to dataloader instance for convenience
-    dataloader.num_batches = num_batches
-    dataloader.num_samples = num_samples
+#     # add meta-data to dataloader instance for convenience
+#     dataloader.num_batches = num_batches
+#     dataloader.num_samples = num_samples
 
-    return DataInfo(dataloader, None)
+#     return DataInfo(dataloader, None)
 
 
 def wds_batch_list2dict(
