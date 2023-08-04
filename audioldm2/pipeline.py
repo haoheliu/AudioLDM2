@@ -143,7 +143,7 @@ def build_model(ckpt_path=None, config=None, model_name="audioldm2-full"):
     if config is not None:
         assert type(config) is str
         config = yaml.load(open(config, "r"), Loader=yaml.FullLoader)
-    else:
+    else: 
         config = default_audioldm_config(model_name)
 
     # # Use text as condition instead of using waveform during training
@@ -158,22 +158,18 @@ def build_model(ckpt_path=None, config=None, model_name="audioldm2-full"):
     checkpoint = torch.load(resume_from_checkpoint, map_location=device)
 
     latent_diffusion.load_state_dict(checkpoint["state_dict"])
-
+    
     latent_diffusion.eval()
     latent_diffusion = latent_diffusion.to(device)
-
-    # latent_diffusion.cond_stage_model.embed_mode = "text"
+    
     return latent_diffusion
-
 
 def duration_to_latent_t_size(duration):
     return int(duration * 25.6)
 
-
 def text_to_audio(
     latent_diffusion,
     text,
-    original_audio_file_path=None,
     seed=42,
     ddim_steps=200,
     duration=10,
@@ -188,21 +184,10 @@ def text_to_audio(
 
     seed_everything(int(seed))
     waveform = None
-    if original_audio_file_path is not None:
-        waveform = read_wav_file(original_audio_file_path, int(duration * 102.4) * 160)
 
     batch = make_batch_for_text_to_audio(text, waveform=waveform, batchsize=batchsize)
 
     latent_diffusion.latent_t_size = duration_to_latent_t_size(duration)
-
-    # if waveform is not None:
-    #     print(
-    #         "Generate audio that has similar content as %s" % original_audio_file_path
-    #     )
-        # latent_diffusion = set_cond_audio(latent_diffusion)
-    # else:
-    #     print("Generate audio using text %s" % text)
-        # latent_diffusion = set_cond_text(latent_diffusion)
 
     with torch.no_grad():
         waveform = latent_diffusion.generate_batch(

@@ -26,7 +26,7 @@ from setuptools import find_packages, setup, Command
 
 # Package meta-data.
 NAME = "audioldm2"
-DESCRIPTION = "This package is written for text-to-audio generation."
+DESCRIPTION = "This package is written for text-to-audio/music generation."
 URL = "https://github.com/haoheliu/audioldm2"
 EMAIL = "haoheliu@gmail.com"
 AUTHOR = "Haohe Liu"

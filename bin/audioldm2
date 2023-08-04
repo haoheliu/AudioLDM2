@@ -1,17 +1,14 @@
 #!/usr/bin/python3
-import sys
-sys.path.append("/mnt/fast/nobackup/scratch4weeks/hl01486/project/audioldm-text-to-audio-generation")
-
 import os
 import torch
-
 import logging
+from audioldm2 import text_to_audio, build_model, save_wave, get_time, read_list
+import argparse
 
+os.environ["TOKENIZERS_PARALLELISM"] = "true"
 matplotlib_logger = logging.getLogger('matplotlib')
 matplotlib_logger.setLevel(logging.WARNING)
 
-from audioldm2 import text_to_audio, build_model, save_wave, get_time
-import argparse
 
 CACHE_DIR = os.getenv(
     "AUDIOLDM_CACHE_DIR",
@@ -26,6 +23,15 @@ parser.add_argument(
     required=False,
     default="",
     help="Text prompt to the model for audio generation",
+)
+
+parser.add_argument(
+    "-tl",
+    "--text_list",
+    type=str,
+    required=False,
+    default="",
+    help="A file that contains text prompt to the model for audio generation",
 )
 
 parser.add_argument(
@@ -44,15 +50,6 @@ parser.add_argument(
     help="The checkpoint you gonna use",
     default="audioldm2-full",
     choices=["audioldm2-full"]
-)
-
-parser.add_argument(
-    "-ckpt",
-    "--ckpt_path",
-    type=str,
-    required=False,
-    help="The path to the pretrained .ckpt model",
-    default=None,
 )
 
 parser.add_argument(
@@ -101,21 +98,8 @@ parser.add_argument(
 args = parser.parse_args()
 
 torch.set_float32_matmul_precision("high")
-
-if(args.ckpt_path is not None):
-    print("Warning: ckpt_path has no effect after version 0.0.20.")
-
-mode = args.mode
-if(mode == "generation" and args.file_path is not None):
-    mode = "generation_audio_to_audio"
-    if(len(args.text) > 0):
-        print("Warning: You have specified the --file_path. --text will be ignored")
-        args.text = ""
         
-save_path = os.path.join(args.save_path, mode)
-
-if(args.file_path is not None):
-    save_path = os.path.join(save_path, os.path.basename(args.file_path.split(".")[0]))
+save_path = os.path.join(args.save_path, get_time())
 
 text = args.text
 random_seed = args.seed
@@ -126,16 +110,22 @@ n_candidate_gen_per_text = args.n_candidate_gen_per_text
 os.makedirs(save_path, exist_ok=True)
 audioldm2 = build_model(model_name=args.model_name)
 
-waveform = text_to_audio(
-    audioldm2,
-    text,
-    args.file_path,
-    random_seed,
-    duration=duration,
-    guidance_scale=guidance_scale,
-    ddim_steps=args.ddim_steps,
-    n_candidate_gen_per_text=n_candidate_gen_per_text,
-    batchsize=args.batchsize,
-)
-
-save_wave(waveform, save_path, name="%s_%s" % (get_time(), text))
+if(args.text_list):
+    print("Generate audio based on the text prompts in %s" % args.text_list)
+    prompt_todo = read_list(args.text_list)
+else: 
+    prompt_todo = [text]
+    
+for text in prompt_todo:
+    waveform = text_to_audio(
+        audioldm2,
+        text,
+        seed=random_seed,
+        duration=duration,
+        guidance_scale=guidance_scale,
+        ddim_steps=args.ddim_steps,
+        n_candidate_gen_per_text=n_candidate_gen_per_text,
+        batchsize=args.batchsize,
+    )
+        
+    save_wave(waveform, save_path, name=text)

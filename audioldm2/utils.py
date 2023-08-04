@@ -14,6 +14,13 @@ CACHE_DIR = os.getenv(
     "AUDIOLDM_CACHE_DIR", os.path.join(os.path.expanduser("~"), ".cache/audioldm2")
 )
 
+def read_list(fname):
+    result = []
+    with open(fname, "r", encoding="utf-8") as f:
+        for each in f.readlines():
+            each = each.strip('\n')
+            result.append(each)
+    return result
 
 def get_duration(fname):
     with contextlib.closing(wave.open(fname, "r")) as f:

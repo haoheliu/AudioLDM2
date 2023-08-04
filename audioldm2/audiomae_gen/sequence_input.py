@@ -8,7 +8,6 @@ from audioldm2.latent_diffusion.util import (
 from transformers import GPT2Config, GPT2Model
 import torch.optim.lr_scheduler as lr_scheduler
 
-
 class Sequence2AudioMAE(nn.Module):
     def __init__(
         self,

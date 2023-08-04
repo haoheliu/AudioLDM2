@@ -1489,7 +1489,8 @@ class LatentDiffusion(DDPM):
 
         use_ddim = ddim_steps is not None
 
-        with self.ema_scope("Plotting"):
+        # with self.ema_scope("Plotting"):
+        for i in range(1):
             z, c = self.get_input(
                 batch,
                 self.first_stage_key,
@@ -1556,8 +1557,9 @@ class LatentDiffusion(DDPM):
 
                 waveform = waveform[best_index]
 
-                print("Similarity between generated audio and text", similarity)
-                print("Choose the following indexes:", best_index)
+                print("Similarity between generated audio and text:")
+                print(' '.join('{:.2f}'.format(num) for num in similarity.detach().cpu().tolist()))
+                print("Choose the following indexes as the output:", best_index)
 
             return waveform
 
