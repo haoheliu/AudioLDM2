@@ -9,7 +9,6 @@ os.environ["TOKENIZERS_PARALLELISM"] = "true"
 matplotlib_logger = logging.getLogger('matplotlib')
 matplotlib_logger.setLevel(logging.WARNING)
 
-
 CACHE_DIR = os.getenv(
     "AUDIOLDM_CACHE_DIR",
     os.path.join(os.path.expanduser("~"), ".cache/audioldm2"))
@@ -127,5 +126,5 @@ for text in prompt_todo:
         n_candidate_gen_per_text=n_candidate_gen_per_text,
         batchsize=args.batchsize,
     )
-        
+     
     save_wave(waveform, save_path, name=text)

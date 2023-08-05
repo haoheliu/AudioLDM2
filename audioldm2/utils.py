@@ -109,12 +109,73 @@ def instantiate_from_config(config):
         return get_obj_from_str(config["target"])(**config.get("params", dict()))
     except:
         import ipdb
-
         ipdb.set_trace()
 
-
 def default_audioldm_config(model_name="audioldm2-full"):
-    basic_config = {
+    basic_config = get_basic_config()
+    if("-large-" in model_name):
+        basic_config["model"]["params"]["unet_config"]["params"]["context_dim"] = [768, 1024, None]
+        basic_config["model"]["params"]["unet_config"]["params"]["transformer_depth"] = 2
+    return basic_config
+
+def get_metadata():
+    return {
+        "audioldm2-full": {
+            "path": os.path.join(
+                CACHE_DIR,
+                "audioldm2-full.pth",
+            ),
+            "url": "https://huggingface.co/haoheliu/audioldm2-full/resolve/main/audioldm2-full.pth",
+        },
+        "audioldm2-music-665k": {
+            "path": os.path.join(
+                CACHE_DIR,
+                "audioldm2-music-665k",
+            ), 
+            "url": "https://huggingface.co/haoheliu/audioldm2-music-665k/resolve/main/audioldm2-music-665k.pth", 
+        },
+        "audioldm2-full-large-650k": {
+            "path": os.path.join(
+                CACHE_DIR,
+                "audioldm2-full-large-650k.pth",
+            ),
+            "url": "https://huggingface.co/haoheliu/audioldm2-full-large-650k/resolve/main/audioldm2-full-large-650k.pth", 
+        },
+    }
+
+class MyProgressBar:
+    def __init__(self):
+        self.pbar = None
+
+    def __call__(self, block_num, block_size, total_size):
+        if not self.pbar:
+            self.pbar = progressbar.ProgressBar(maxval=total_size)
+            self.pbar.start()
+
+        downloaded = block_num * block_size
+        if downloaded < total_size:
+            self.pbar.update(downloaded)
+        else:
+            self.pbar.finish()
+
+
+def download_checkpoint(checkpoint_name="audioldm2-full"):
+    meta = get_metadata()
+    if checkpoint_name not in meta.keys():
+        print(
+            "The model name you provided is not supported. Please use one of the following: ",
+            meta.keys(),
+        )
+
+    model_id = "haoheliu/%s" % checkpoint_name
+    hf_hub_download(
+        repo_id=model_id,
+        filename=os.path.basename(meta[checkpoint_name]["path"]),
+        local_dir=os.path.dirname(meta[checkpoint_name]["path"]),
+    )
+
+def get_basic_config():
+    return {
         "metadata_root": "/mnt/bn/lqhaoheliu/metadata/processed/dataset_root.json",
         "log_directory": "./log/audiomae_pred",
         "precision": "high",
@@ -165,7 +226,7 @@ def default_audioldm_config(model_name="audioldm2-full"):
             "mel": {"n_mel_channels": 64, "mel_fmin": 0, "mel_fmax": 8000},
         },
         "augmentation": {"mixup": 0},
-        "model": {
+        "model": { # 
             "target": "audioldm2.latent_diffusion.models.ddpm.LatentDiffusion",
             "params": {
                 "first_stage_config": {
@@ -305,48 +366,3 @@ def default_audioldm_config(model_name="audioldm2-full"):
             },
         },
     }
-    return basic_config
-
-
-def get_metadata():
-    return {
-        "audioldm2-full": {
-            "path": os.path.join(
-                CACHE_DIR,
-                "audioldm2-full.pth",
-            ),
-            "url": "https://huggingface.co/haoheliu/audioldm2-full/resolve/main/audioldm2-full.pth",
-        },
-    }
-
-
-class MyProgressBar:
-    def __init__(self):
-        self.pbar = None
-
-    def __call__(self, block_num, block_size, total_size):
-        if not self.pbar:
-            self.pbar = progressbar.ProgressBar(maxval=total_size)
-            self.pbar.start()
-
-        downloaded = block_num * block_size
-        if downloaded < total_size:
-            self.pbar.update(downloaded)
-        else:
-            self.pbar.finish()
-
-
-def download_checkpoint(checkpoint_name="audioldm2-full"):
-    meta = get_metadata()
-    if checkpoint_name not in meta.keys():
-        print(
-            "The model name you provided is not supported. Please use one of the following: ",
-            meta.keys(),
-        )
-
-    model_id = "haoheliu/%s" % checkpoint_name
-    hf_hub_download(
-        repo_id=model_id,
-        filename=os.path.basename(meta[checkpoint_name]["path"]),
-        local_dir=os.path.dirname(meta[checkpoint_name]["path"]),
-    )

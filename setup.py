@@ -31,7 +31,7 @@ URL = "https://github.com/haoheliu/audioldm2"
 EMAIL = "haoheliu@gmail.com"
 AUTHOR = "Haohe Liu"
 REQUIRES_PYTHON = ">=3.7.0"
-VERSION = "0.0.2"
+VERSION = "0.0.3"
 
 # What packages are required for this module to be executed?
 REQUIRED = [
@@ -52,6 +52,7 @@ REQUIRED = [
     "transformers",
     "progressbar",
     "ftfy",
+    "timm"
 ]
 
 # What packages are optional?
