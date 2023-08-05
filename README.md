@@ -41,9 +41,37 @@ audioldm2 -t "Musical constellations twinkling in the night sky, forming a cosmi
 audioldm2 -tl batch.lst
 ```
 
+## Random Seed Matters
+
+Sometimes model may not perform well (sounds wired or low quality) when changing into a different hardware. In this case, please adjust the random seed and find the optimal one for your hardware. 
+```shell
+audioldm2 --seed 1234 -t "Musical constellations twinkling in the night sky, forming a cosmic melody."
+```
+
+## Pretrained Models
+
+You can choose model checkpoint by setting up "model_name":
+
+```shell
+audioldm2 --model_name "audioldm2-full-large-650k" -t "Musical constellations twinkling in the night sky, forming a cosmic melody."
+```
+
+We have three checkpoints you can choose for now:
+1. **audioldm2-full** (default): This checkpoint can perform both sound effect and music generation. 
+2. **audioldm2-music-665k**: This checkpoint is specialized on music generation. 
+3. **audioldm2-full-large-650k**: This checkpoint is the larger version of audioldm2-full. 
+
+Evaluation result on AudioCaps and MusicCaps evaluation set:
+
+Coming soon.
+
 
 ## Cite this work
 If you found this tool useful, please consider citing
+
+```bibtex
+    AudioLDM 2 paper coming soon
+```
 
 ```bibtex
 @article{liu2023audioldm,
