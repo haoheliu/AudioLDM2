@@ -31,7 +31,7 @@ URL = "https://github.com/haoheliu/audioldm2"
 EMAIL = "haoheliu@gmail.com"
 AUTHOR = "Haohe Liu"
 REQUIRES_PYTHON = ">=3.7.0"
-VERSION = "0.0.4"
+VERSION = "0.0.5"
 
 # What packages are required for this module to be executed?
 REQUIRED = [
@@ -48,8 +48,9 @@ REQUIRED = [
     "librosa==0.9.2",
     "scipy",
     "pandas",
-    "torchlibrosa==0.0.9",
-    "transformers",
+    "torchlibrosa>=0.0.9",
+    "transformers==4.30.2",
+    "huggingface_hub",
     "progressbar",
     "ftfy",
     "timm"

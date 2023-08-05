@@ -10,10 +10,6 @@ import wave
 
 import progressbar
 
-CACHE_DIR = os.getenv(
-    "AUDIOLDM_CACHE_DIR", os.path.join(os.path.expanduser("~"), ".cache/audioldm2")
-)
-
 def read_list(fname):
     result = []
     with open(fname, "r", encoding="utf-8") as f:
@@ -118,31 +114,6 @@ def default_audioldm_config(model_name="audioldm2-full"):
         basic_config["model"]["params"]["unet_config"]["params"]["transformer_depth"] = 2
     return basic_config
 
-def get_metadata():
-    return {
-        "audioldm2-full": {
-            "path": os.path.join(
-                CACHE_DIR,
-                "audioldm2-full.pth",
-            ),
-            "url": "https://huggingface.co/haoheliu/audioldm2-full/resolve/main/audioldm2-full.pth",
-        },
-        "audioldm2-music-665k": {
-            "path": os.path.join(
-                CACHE_DIR,
-                "audioldm2-music-665k",
-            ), 
-            "url": "https://huggingface.co/haoheliu/audioldm2-music-665k/resolve/main/audioldm2-music-665k.pth", 
-        },
-        "audioldm2-full-large-650k": {
-            "path": os.path.join(
-                CACHE_DIR,
-                "audioldm2-full-large-650k.pth",
-            ),
-            "url": "https://huggingface.co/haoheliu/audioldm2-full-large-650k/resolve/main/audioldm2-full-large-650k.pth", 
-        },
-    }
-
 class MyProgressBar:
     def __init__(self):
         self.pbar = None
@@ -158,21 +129,13 @@ class MyProgressBar:
         else:
             self.pbar.finish()
 
-
 def download_checkpoint(checkpoint_name="audioldm2-full"):
-    meta = get_metadata()
-    if checkpoint_name not in meta.keys():
-        print(
-            "The model name you provided is not supported. Please use one of the following: ",
-            meta.keys(),
-        )
-
     model_id = "haoheliu/%s" % checkpoint_name
-    hf_hub_download(
+    checkpoint_path = hf_hub_download(
         repo_id=model_id,
-        filename=os.path.basename(meta[checkpoint_name]["path"]),
-        local_dir=os.path.dirname(meta[checkpoint_name]["path"]),
+        filename=checkpoint_name+".pth"
     )
+    return checkpoint_path
 
 def get_basic_config():
     return {

@@ -41,9 +41,9 @@ import os
 
 __conditioning_keys__ = {"concat": "c_concat", "crossattn": "c_crossattn", "adm": "y"}
 
-CACHE_DIR = os.getenv(
-    "AUDIOLDM_CACHE_DIR", os.path.join(os.path.expanduser("~"), ".cache/audioldm2")
-)
+# CACHE_DIR = os.getenv(
+#     "AUDIOLDM_CACHE_DIR", os.path.join(os.path.expanduser("~"), ".cache/audioldm2")
+# )
 
 
 def disabled_train(self, mode=True):

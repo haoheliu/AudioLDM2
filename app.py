@@ -8,9 +8,6 @@ import gradio as gr
 from audioldm2 import text_to_audio, build_model
 from share_btn import community_icon_html, loading_icon_html, share_js
 
-model_id = "haoheliu/audioldm2-full"
-hf_hub_download(repo_id="haoheliu/audioldm2-full", filename="audioldm2-full.pth")
-
 audioldm = None
 current_model_name = None
 
@@ -29,7 +26,6 @@ def text2audio(
         current_model_name = model_name
         audioldm = torch.compile(audioldm)
 
-    # print(text, length, guidance_scale)
     waveform = text_to_audio(
         latent_diffusion=audioldm,
         text=text,
@@ -357,5 +353,5 @@ with iface:
 # <p>This demo is strictly for research demo purpose only. For commercial use please <a href="haoheliu@gmail.com">contact us</a>.</p>
 
 iface.queue(concurrency_count=3)
-# iface.launch(debug=True)
-iface.launch(debug=True, share=True)
+iface.launch(debug=True)
+# iface.launch(debug=True, share=True)

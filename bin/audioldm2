@@ -9,10 +9,6 @@ os.environ["TOKENIZERS_PARALLELISM"] = "true"
 matplotlib_logger = logging.getLogger('matplotlib')
 matplotlib_logger.setLevel(logging.WARNING)
 
-CACHE_DIR = os.getenv(
-    "AUDIOLDM_CACHE_DIR",
-    os.path.join(os.path.expanduser("~"), ".cache/audioldm2"))
-
 parser = argparse.ArgumentParser()
 
 parser.add_argument(
@@ -48,7 +44,7 @@ parser.add_argument(
     required=False,
     help="The checkpoint you gonna use",
     default="audioldm2-full",
-    choices=["audioldm2-full"]
+    choices=["audioldm2-full", "audioldm2-music-665k", "audioldm2-full-large-650k"]
 )
 
 parser.add_argument(

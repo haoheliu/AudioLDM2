@@ -5,13 +5,12 @@ import torch
 import torchaudio
 
 from audioldm2.latent_diffusion.models.ddpm import LatentDiffusion
-from audioldm2.utils import default_audioldm_config, get_metadata, download_checkpoint
-from audioldm2.utilities.audio import read_wav_file
+from audioldm2.utils import default_audioldm_config, download_checkpoint
 import os
 
-CACHE_DIR = os.getenv(
-    "AUDIOLDM_CACHE_DIR", os.path.join(os.path.expanduser("~"), ".cache/audioldm2")
-)
+# CACHE_DIR = os.getenv(
+#     "AUDIOLDM_CACHE_DIR", os.path.join(os.path.expanduser("~"), ".cache/audioldm2")
+# )
 
 
 def seed_everything(seed):
@@ -112,28 +111,24 @@ def round_up_duration(duration):
     return int(round(duration / 2.5) + 1) * 2.5
 
 
-def split_clap_weight_to_pth(checkpoint):
-    if os.path.exists(os.path.join(CACHE_DIR, "clap.pth")):
-        return
-    print("Constructing the weight for the CLAP model.")
-    include_keys = "cond_stage_models.0.cond_stage_models.0.model."
-    new_state_dict = {}
-    for each in checkpoint["state_dict"].keys():
-        if include_keys in each:
-            new_state_dict[each.replace(include_keys, "module.")] = checkpoint[
-                "state_dict"
-            ][each]
-    torch.save({"state_dict": new_state_dict}, os.path.join(CACHE_DIR, "clap.pth"))
+# def split_clap_weight_to_pth(checkpoint):
+#     if os.path.exists(os.path.join(CACHE_DIR, "clap.pth")):
+#         return
+#     print("Constructing the weight for the CLAP model.")
+#     include_keys = "cond_stage_models.0.cond_stage_models.0.model."
+#     new_state_dict = {}
+#     for each in checkpoint["state_dict"].keys():
+#         if include_keys in each:
+#             new_state_dict[each.replace(include_keys, "module.")] = checkpoint[
+#                 "state_dict"
+#             ][each]
+#     torch.save({"state_dict": new_state_dict}, os.path.join(CACHE_DIR, "clap.pth"))
 
 
 def build_model(ckpt_path=None, config=None, model_name="audioldm2-full"):
     print("Loading AudioLDM-2: %s" % model_name)
 
-    if ckpt_path is None:
-        ckpt_path = get_metadata()[model_name]["path"]
-
-    if not os.path.exists(ckpt_path):
-        download_checkpoint(model_name)
+    ckpt_path = download_checkpoint(model_name)
 
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
