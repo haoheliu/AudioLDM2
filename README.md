@@ -61,10 +61,6 @@ We have three checkpoints you can choose for now:
 2. **audioldm2-music-665k**: This checkpoint is specialized on music generation. 
 3. **audioldm2-full-large-650k**: This checkpoint is the larger version of audioldm2-full. 
 
-Evaluation result on AudioCaps and MusicCaps evaluation set:
-
-Coming soon.
-
 ## Other options
 ```shell
   usage: audioldm2 [-h] [-t TEXT] [-tl TEXT_LIST] [-s SAVE_PATH] [--model_name {audioldm2-full,audioldm2-music-665k,audioldm2-full-large-650k}] [-b BATCHSIZE] [--ddim_steps DDIM_STEPS] [-gs GUIDANCE_SCALE]
