@@ -11,7 +11,7 @@ This repo currently support Text-to-Audio Generation (including Music)
 1. Prepare running environment
 ```shell
 conda create -n audioldm python=3.8; conda activate audioldm
-pip3 install audioldm2
+pip3 install git+https://github.com/haoheliu/AudioLDM2.git
 git clone https://github.com/haoheliu/AudioLDM2; cd AudioLDM2
 ```
 2. Start the web application (powered by Gradio)
