@@ -2,12 +2,13 @@ from huggingface_hub import hf_hub_download
 import torch
 import os
 
-os.environ["TOKENIZERS_PARALLELISM"] = "true"
-
 import gradio as gr
 from audioldm2 import text_to_audio, build_model
 from share_btn import community_icon_html, loading_icon_html, share_js
 
+os.environ["TOKENIZERS_PARALLELISM"] = "true"
+
+default_checkpoint="audioldm2-full"
 audioldm = None
 current_model_name = None
 
@@ -16,7 +17,7 @@ def text2audio(
     guidance_scale,
     random_seed,
     n_candidates,
-    model_name="audioldm2-full",
+    model_name=default_checkpoint,
 ):
     global audioldm, current_model_name
     torch.set_float32_matmul_precision("high")
@@ -26,6 +27,7 @@ def text2audio(
         current_model_name = model_name
         audioldm = torch.compile(audioldm)
 
+    # print(text, length, guidance_scale)
     waveform = text_to_audio(
         latent_diffusion=audioldm,
         text=text,
@@ -197,16 +199,13 @@ with iface:
                 </h1>
               </div>
               <p style="margin-bottom: 10px; font-size: 94%">
-                <a href="https://arxiv.org/abs/2301.12503">[Paper]</a>  <a href="https://audioldm.github.io/">[Project page]</a>
+                <a href="https://arxiv.org/abs/2301.12503">[Paper]</a>  <a href="https://audioldm.github.io/audioldm2">[Project page]</a> <a href="https://discord.com/invite/b64SEmdf">[Join Discord]</a>
               </p>
             </div>
         """
     )
     gr.HTML(
         """
-        <h1 style="font-weight: 900; margin-bottom: 7px;">
-        AudioLDM 2: A General Framework for Audio, Music, and Speech Generation
-        </h1>
         <p>For faster inference without waiting in queue, you may duplicate the space and upgrade to GPU in settings.
         <br/>
         <a href="https://huggingface.co/spaces/haoheliu/audioldm2-text2audio-text2music?duplicate=true">
@@ -279,7 +278,7 @@ with iface:
         gr.HTML(
             """
         <div class="footer" style="text-align: center; max-width: 700px; margin: 0 auto;">
-                    <p>Follow the latest update of AudioLDM on our<a href="https://github.com/haoheliu/AudioLDM" style="text-decoration: underline;" target="_blank"> Github repo</a>
+                    <p>Follow the latest update of AudioLDM 2 on our<a href="https://github.com/haoheliu/AudioLDM2" style="text-decoration: underline;" target="_blank"> Github repo</a>
                     </p>
                     <br>
                     <p>Model by <a href="https://twitter.com/LiuHaohe" style="text-decoration: underline;" target="_blank">Haohe Liu</a></p>
@@ -294,35 +293,35 @@ with iface:
                     3.5,
                     45,
                     3,
-                    "audioldm2-full",
+                    default_checkpoint,
                 ],
                 [
                     "A cat is meowing for attention.",
                     3.5,
                     45,
                     3,
-                    "audioldm2-full",
+                    default_checkpoint,
                 ],
                 [
                     "Birds singing sweetly in a blooming garden.",
                     3.5,
                     45,
                     3,
-                    "audioldm2-full",
+                    default_checkpoint,
                 ],
                 [
                     "A modern synthesizer creating futuristic soundscapes.",
                     3.5,
                     45,
                     3,
-                    "audioldm2-full",
+                    default_checkpoint,
                 ],
                 [
                     "The vibrant beat of Brazilian samba drums.",
                     3.5,
                     45,
                     3,
-                    "audioldm2-full",
+                    default_checkpoint,
                 ],
             ],
             fn=text2audio,
@@ -335,7 +334,7 @@ with iface:
             """
                 <div class="acknowledgements">
                 <p>Essential Tricks for Enhancing the Quality of Your Generated Audio</p>
-                <p>1. Try to use more adjectives to describe your sound. For example: "A man is speaking clearly and slowly in a large room" is better than "A man is speaking". This can make sure AudioLDM understands what you want.</p>
+                <p>1. Try to use more adjectives to describe your sound. For example: "A man is speaking clearly and slowly in a large room" is better than "A man is speaking". This can make sure AudioLDM 2 understands what you want.</p>
                 <p>2. Try to use different random seeds, which can affect the generation quality significantly sometimes.</p>
                 <p>3. It's better to use general terms like 'man' or 'woman' instead of specific names for individuals or abstract objects that humans may not be familiar with, such as 'mummy'.</p>
                 </div>

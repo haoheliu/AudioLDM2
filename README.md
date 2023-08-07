@@ -65,6 +65,31 @@ Evaluation result on AudioCaps and MusicCaps evaluation set:
 
 Coming soon.
 
+## Other options
+```shell
+  usage: audioldm2 [-h] [-t TEXT] [-tl TEXT_LIST] [-s SAVE_PATH] [--model_name {audioldm2-full,audioldm2-music-665k,audioldm2-full-large-650k}] [-b BATCHSIZE] [--ddim_steps DDIM_STEPS] [-gs GUIDANCE_SCALE]
+                  [-n N_CANDIDATE_GEN_PER_TEXT] [--seed SEED]
+
+  optional arguments:
+    -h, --help            show this help message and exit
+    -t TEXT, --text TEXT  Text prompt to the model for audio generation
+    -tl TEXT_LIST, --text_list TEXT_LIST
+                          A file that contains text prompt to the model for audio generation
+    -s SAVE_PATH, --save_path SAVE_PATH
+                          The path to save model output
+    --model_name {audioldm2-full,audioldm2-music-665k,audioldm2-full-large-650k}
+                          The checkpoint you gonna use
+    -b BATCHSIZE, --batchsize BATCHSIZE
+                          Generate how many samples at the same time
+    --ddim_steps DDIM_STEPS
+                          The sampling step for DDIM
+    -gs GUIDANCE_SCALE, --guidance_scale GUIDANCE_SCALE
+                          Guidance scale (Large => better quality and relavancy to text; Small => better diversity)
+    -n N_CANDIDATE_GEN_PER_TEXT, --n_candidate_gen_per_text N_CANDIDATE_GEN_PER_TEXT
+                          Automatic quality control. This number control the number of candidates (e.g., generate three audios and choose the best to show you). A Larger value usually lead to better quality with
+                          heavier computation
+    --seed SEED           Change this value (any integer number) will lead to a different generation result.
+```
 
 ## Cite this work
 If you found this tool useful, please consider citing

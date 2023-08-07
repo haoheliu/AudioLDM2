@@ -31,7 +31,7 @@ URL = "https://github.com/haoheliu/audioldm2"
 EMAIL = "haoheliu@gmail.com"
 AUTHOR = "Haohe Liu"
 REQUIRES_PYTHON = ">=3.7.0"
-VERSION = "0.0.6"
+VERSION = "0.0.9"
 
 # What packages are required for this module to be executed?
 REQUIRED = [
@@ -82,7 +82,6 @@ if not VERSION:
         exec(f.read(), about)
 else:
     about["__version__"] = VERSION
-
 
 class UploadCommand(Command):
     """Support setup.py upload."""

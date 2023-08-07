@@ -55,15 +55,18 @@ def save_wave(waveform, savepath, name="outwav"):
         name = [name] * waveform.shape[0]
 
     for i in range(waveform.shape[0]):
+        if(waveform.shape[0] > 1):
+            fname = "%s_%s.wav" % (
+                    os.path.basename(name[i])
+                    if (not ".wav" in name[i])
+                    else os.path.basename(name[i]).split(".")[0],
+                    i,
+                )
+        else:
+            fname = "%s.wav" % os.path.basename(name[i]) if (not ".wav" in name[i]) else os.path.basename(name[i]).split(".")[0]
+            
         path = os.path.join(
-            savepath,
-            "%s_%s.wav"
-            % (
-                os.path.basename(name[i])
-                if (not ".wav" in name[i])
-                else os.path.basename(name[i]).split(".")[0],
-                i,
-            ),
+            savepath, fname
         )
         print("Save audio to %s" % path)
         sf.write(path, waveform[i, 0], samplerate=16000)

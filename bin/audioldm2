@@ -112,6 +112,11 @@ else:
     prompt_todo = [text]
     
 for text in prompt_todo:
+    if("|" in text):
+        text, name = text.split("|")
+    else:
+        name = text[:128]
+
     waveform = text_to_audio(
         audioldm2,
         text,
@@ -122,5 +127,5 @@ for text in prompt_todo:
         n_candidate_gen_per_text=n_candidate_gen_per_text,
         batchsize=args.batchsize,
     )
-     
-    save_wave(waveform, save_path, name=text)
+    
+    save_wave(waveform, save_path, name=name)
