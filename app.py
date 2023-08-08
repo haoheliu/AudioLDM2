@@ -272,6 +272,7 @@ with iface:
             text2audio,
             inputs=[textbox, guidance_scale, seed, n_candidates],
             outputs=[outputs],
+            api_name="text2audio",
         )
 
         share_button.click(None, [], [], _js=share_js)
