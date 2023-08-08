@@ -6,6 +6,13 @@ This repo currently support Text-to-Audio Generation (including Music)
 
 <hr>
 
+## TODO
+- [ ] Add the text-to-speech checkpoint
+- [ ] Add the text-to-audio checkpoint that does not use FLAN-T5 Cross Attention
+- [ ] Open-source the AudioLDM 1 & 2 training code.
+- [ ] Optimizing the inference speed of the model.
+- [ ] Integration with the Diffusers library
+
 ## Web APP
 
 1. Prepare running environment
