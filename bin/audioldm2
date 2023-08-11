@@ -48,6 +48,15 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "-d",
+    "--device",
+    type=str,
+    required=False,
+    help="The device for computation. If not specified, the script will automatically choose the device based on your environment.",
+    default="auto",
+)
+
+parser.add_argument(
     "-b",
     "--batchsize",
     type=int,
@@ -103,7 +112,7 @@ guidance_scale = args.guidance_scale
 n_candidate_gen_per_text = args.n_candidate_gen_per_text
 
 os.makedirs(save_path, exist_ok=True)
-audioldm2 = build_model(model_name=args.model_name)
+audioldm2 = build_model(model_name=args.model_name, device=args.device)
 
 if(args.text_list):
     print("Generate audio based on the text prompts in %s" % args.text_list)

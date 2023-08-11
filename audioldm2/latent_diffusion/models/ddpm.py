@@ -113,6 +113,7 @@ class DDPM(nn.Module):
 
         self.clap = CLAPAudioEmbeddingClassifierFreev2(
             pretrained_path="",
+            enable_cuda=self.device=="cuda",
             sampling_rate=self.sampling_rate,
             embed_mode="audio",
             amodel="HTSAT-base",

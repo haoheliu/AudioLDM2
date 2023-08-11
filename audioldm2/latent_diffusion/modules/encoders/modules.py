@@ -545,6 +545,7 @@ class CLAPAudioEmbeddingClassifierFreev2(nn.Module):
     def __init__(
         self,
         pretrained_path="",
+        enable_cuda=False,
         sampling_rate=16000,
         embed_mode="audio",
         amodel="HTSAT-base",
@@ -554,7 +555,8 @@ class CLAPAudioEmbeddingClassifierFreev2(nn.Module):
         training_mode=True,
     ):
         super().__init__()
-        self.device = "cpu"
+        self.device = "cpu" # The model itself is on cpu
+        self.cuda = enable_cuda
         self.precision = "fp32"
         self.amodel = amodel  # or 'PANN-14'
         self.tmodel = "roberta"  # the best text encoder in our training
@@ -638,7 +640,7 @@ class CLAPAudioEmbeddingClassifierFreev2(nn.Module):
         with torch.no_grad():
             self.embed_mode = "audio"
             # MPS currently does not support ComplexFloat dtype and operator 'aten::_fft_r2c'
-            if torch.cuda.is_available():
+            if self.cuda:
                 audio_emb = self(waveform.cuda())
             else:
                 audio_emb = self(waveform.to("cpu"))
@@ -665,7 +667,7 @@ class CLAPAudioEmbeddingClassifierFreev2(nn.Module):
                 self.tmodel,
                 self.pretrained,
                 precision=self.precision,
-                device="cuda" if torch.cuda.is_available() else "cpu",
+                device="cuda" if self.cuda else "cpu",
                 enable_fusion=self.enable_fusion,
                 fusion_type=self.fusion_type,
             )

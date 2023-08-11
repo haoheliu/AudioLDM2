@@ -125,13 +125,15 @@ def round_up_duration(duration):
 #     torch.save({"state_dict": new_state_dict}, os.path.join(CACHE_DIR, "clap.pth"))
 
 
-def build_model(ckpt_path=None, config=None, model_name="audioldm2-full"):
-    if torch.cuda.is_available():
-        device = torch.device("cuda:0")
-    elif torch.backends.mps.is_available():
-        device = torch.device("mps")
-    else:
-        device = torch.device("cpu")
+def build_model(ckpt_path=None, config=None, device=None, model_name="audioldm2-full"):
+
+    if device is None or device == "auto":
+        if torch.cuda.is_available():
+            device = torch.device("cuda:0")
+        elif torch.backends.mps.is_available():
+            device = torch.device("mps")
+        else:
+            device = torch.device("cpu")
 
     print("Loading AudioLDM-2: %s" % model_name)
     print("Loading model on %s" % device)
