@@ -99,14 +99,19 @@ We have three checkpoints you can choose for now:
 If you found this tool useful, please consider citing
 
 ```bibtex
-    AudioLDM 2 paper coming soon
+@article{liu2023audioldm2,
+  title={{AudioLDM 2}: Learning Holistic Audio Generation with Self-supervised Pretraining},
+  author={Haohe Liu and Qiao Tian and Yi Yuan and Xubo Liu and Xinhao Mei and Qiuqiang Kong and Yuping Wang and Wenwu Wang and Yuxuan Wang and Mark D. Plumbley},
+  journal={arXiv preprint arXiv:2308.05734},
+  year={2023}
+}
 ```
 
 ```bibtex
 @article{liu2023audioldm,
-  title={AudioLDM: Text-to-Audio Generation with Latent Diffusion Models},
+  title={{AudioLDM}: Text-to-Audio Generation with Latent Diffusion Models},
   author={Liu, Haohe and Chen, Zehua and Yuan, Yi and Mei, Xinhao and Liu, Xubo and Mandic, Danilo and Wang, Wenwu and Plumbley, Mark D},
-  journal={arXiv preprint arXiv:2301.12503},
+  journal={Proceedings of the International Conference on Machine Learning},
   year={2023}
 }
 ```
