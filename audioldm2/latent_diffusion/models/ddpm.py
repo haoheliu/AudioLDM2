@@ -800,7 +800,6 @@ class LatentDiffusion(DDPM):
         return self.scale_factor * z
 
     def get_learned_conditioning(self, c, key, unconditional_cfg):
-        print("*** ddpm.py LatentDiffusion get_learned_conditioning ***", self.device)
         assert key in self.cond_stage_model_metadata.keys()
 
         # Classifier-free guidance
