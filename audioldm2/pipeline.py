@@ -126,14 +126,17 @@ def round_up_duration(duration):
 
 
 def build_model(ckpt_path=None, config=None, model_name="audioldm2-full"):
-    print("Loading AudioLDM-2: %s" % model_name)
-
-    ckpt_path = download_checkpoint(model_name)
-
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
+    elif torch.backends.mps.is_available():
+        device = torch.device("mps")
     else:
         device = torch.device("cpu")
+
+    print("Loading AudioLDM-2: %s" % model_name)
+    print("Loading model on %s" % device)
+
+    ckpt_path = download_checkpoint(model_name)
 
     if config is not None:
         assert type(config) is str

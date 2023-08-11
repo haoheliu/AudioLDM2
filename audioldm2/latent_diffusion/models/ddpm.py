@@ -776,7 +776,11 @@ class LatentDiffusion(DDPM):
     def instantiate_cond_stage(self, config):
         self.cond_stage_model_metadata = {}
         for i, cond_model_key in enumerate(config.keys()):
+            print(i, cond_model_key)
+            if "params" in config[cond_model_key] and "device" in config[cond_model_key]["params"]:
+                config[cond_model_key]["params"]["device"] = self.device
             model = instantiate_from_config(config[cond_model_key])
+            model = model.to(self.device)
             self.cond_stage_models.append(model)
             self.cond_stage_model_metadata[cond_model_key] = {
                 "model_idx": i,
@@ -796,6 +800,7 @@ class LatentDiffusion(DDPM):
         return self.scale_factor * z
 
     def get_learned_conditioning(self, c, key, unconditional_cfg):
+        print("*** ddpm.py LatentDiffusion get_learned_conditioning ***", self.device)
         assert key in self.cond_stage_model_metadata.keys()
 
         # Classifier-free guidance
@@ -1428,7 +1433,7 @@ class LatentDiffusion(DDPM):
 
         intermediate = None
         if ddim and not use_plms:
-            ddim_sampler = DDIMSampler(self)
+            ddim_sampler = DDIMSampler(self, device=self.device)
             samples, intermediates = ddim_sampler.sample(
                 ddim_steps,
                 batch_size,
@@ -1480,6 +1485,7 @@ class LatentDiffusion(DDPM):
         use_plms=False,
         **kwargs,
     ):
+        print("*** ddpm.py LantentDiffusionModel generate_batch ***", self.device)
         # Generate n_gen times and select the best
         # Batch: audio, text, fnames
         assert x_T is None
