@@ -803,7 +803,7 @@ def get_dataset_fn(data_path, dataset_type):
             return get_wds_dataset
         else:
             raise ValueError(
-                f"Tried to figure out dataset type, but failed for extention {ext}."
+                f"Tried to figure out dataset type, but failed for extension {ext}."
             )
     elif dataset_type == "toy":
         return get_toy_dataset
