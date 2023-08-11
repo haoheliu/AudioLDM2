@@ -776,7 +776,6 @@ class LatentDiffusion(DDPM):
     def instantiate_cond_stage(self, config):
         self.cond_stage_model_metadata = {}
         for i, cond_model_key in enumerate(config.keys()):
-            print(i, cond_model_key)
             if "params" in config[cond_model_key] and "device" in config[cond_model_key]["params"]:
                 config[cond_model_key]["params"]["device"] = self.device
             model = instantiate_from_config(config[cond_model_key])
@@ -1485,7 +1484,6 @@ class LatentDiffusion(DDPM):
         use_plms=False,
         **kwargs,
     ):
-        print("*** ddpm.py LantentDiffusionModel generate_batch ***", self.device)
         # Generate n_gen times and select the best
         # Batch: audio, text, fnames
         assert x_T is None
