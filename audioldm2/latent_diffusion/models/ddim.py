@@ -23,7 +23,7 @@ class DDIMSampler(object):
     def register_buffer(self, name, attr):
         if type(attr) == torch.Tensor:
             if attr.device != self.device:
-                if self.device == torch.device("mps") and attr.dtype==torch.float64:
+                if self.device == "mps" and attr.dtype==torch.float64:
                     attr = attr.to(self.device, dtype=torch.float32)
                 else:
                     attr = attr.to(self.device)
