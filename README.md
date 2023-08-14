@@ -29,16 +29,22 @@ python3 app.py
 3. A link will be printed out. Click the link to open the browser and play.
 
 ## Commandline Usage
+
+### Installation
 Prepare running environment
 ```shell
 # Optional
 conda create -n audioldm python=3.8; conda activate audioldm
 # Install AudioLDM
 pip3 install git+https://github.com/haoheliu/AudioLDM2.git
-# Install espeak (https://espeak.sourceforge.net/download.html)
+```
+
+Please make sure you have installed [espeak](https://espeak.sourceforge.net/download.html). On linux you can do it by 
+```shell
 sudo apt-get install espeak
 ```
 
+### Run the model in commandline
 - Generate sound effect or Music based on a text prompt
 
 ```shell
