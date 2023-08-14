@@ -35,6 +35,8 @@ Prepare running environment
 conda create -n audioldm python=3.8; conda activate audioldm
 # Install AudioLDM
 pip3 install git+https://github.com/haoheliu/AudioLDM2.git
+# Install espeak (https://espeak.sourceforge.net/download.html)
+sudo apt-get install espeak
 ```
 
 - Generate sound effect or Music based on a text prompt
