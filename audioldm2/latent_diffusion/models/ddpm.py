@@ -481,12 +481,13 @@ class DDPM(nn.Module):
     def get_input(self, batch, k):
         # fbank, log_magnitudes_stft, label_indices, fname, waveform, clip_label, text = batch
         # fbank, stft, label_indices, fname, waveform, text = batch
-        fname, text, waveform, stft, fbank = (
+        fname, text, waveform, stft, fbank, phoneme_idx = (
             batch["fname"],
             batch["text"],
             batch["waveform"],
             batch["stft"],
             batch["log_mel_spec"],
+            batch["phoneme_idx"]
         )
         # for i in range(fbank.size(0)):
         #     fb = fbank[i].numpy()
@@ -509,6 +510,7 @@ class DDPM(nn.Module):
         # ret["clip_label"] = clip_label.to(memory
         # _format=torch.contiguous_format).float()
         ret["waveform"] = waveform.to(memory_format=torch.contiguous_format).float()
+        ret["phoneme_idx"] = phoneme_idx.to(memory_format=torch.contiguous_format).long()
         ret["text"] = list(text)
         ret["fname"] = fname
 

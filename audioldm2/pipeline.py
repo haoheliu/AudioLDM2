@@ -1,17 +1,19 @@
 import os
+import re
 
 import yaml
 import torch
 import torchaudio
 
+import audioldm2.latent_diffusion.modules.phoneme_encoder.text as text
 from audioldm2.latent_diffusion.models.ddpm import LatentDiffusion
+from audioldm2.latent_diffusion.util import get_vits_phoneme_ids_no_padding
 from audioldm2.utils import default_audioldm_config, download_checkpoint
 import os
 
 # CACHE_DIR = os.getenv(
 #     "AUDIOLDM_CACHE_DIR", os.path.join(os.path.expanduser("~"), ".cache/audioldm2")
 # )
-
 
 def seed_everything(seed):
     import random, os
@@ -26,10 +28,11 @@ def seed_everything(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = True
 
+def text2phoneme(data):
+    return text._clean_text(re.sub(r'<.*?>', '', data), ["english_cleaners2"])
 
 def text_to_filename(text):
     return text.replace(" ", "_").replace("'", "_").replace('"', "_")
-
 
 def extract_kaldi_fbank_feature(waveform, sampling_rate, log_mel_spec):
     norm_mean = -4.2677393
@@ -69,9 +72,11 @@ def extract_kaldi_fbank_feature(waveform, sampling_rate, log_mel_spec):
 
     return {"ta_kaldi_fbank": fbank}  # [1024, 128]
 
-
-def make_batch_for_text_to_audio(text, waveform=None, fbank=None, batchsize=1):
+def make_batch_for_text_to_audio(text, transcription="", waveform=None, fbank=None, batchsize=1):
     text = [text] * batchsize
+    transcription = text2phoneme(transcription)
+    transcription = [transcription] * batchsize
+
     if batchsize < 1:
         print("Warning: Batchsize must be at least 1. Batchsize is set to .")
 
@@ -85,6 +90,7 @@ def make_batch_for_text_to_audio(text, waveform=None, fbank=None, batchsize=1):
         assert fbank.size(0) == batchsize
 
     stft = torch.zeros((batchsize, 1024, 512))  # Not used
+    phonemes = get_vits_phoneme_ids_no_padding(transcription)
 
     if waveform is None:
         waveform = torch.zeros((batchsize, 160000))  # Not used
@@ -103,7 +109,7 @@ def make_batch_for_text_to_audio(text, waveform=None, fbank=None, batchsize=1):
         "log_mel_spec": fbank,
         "ta_kaldi_fbank": ta_kaldi_fbank,
     }
-
+    batch.update(phonemes)
     return batch
 
 
@@ -165,6 +171,7 @@ def duration_to_latent_t_size(duration):
 def text_to_audio(
     latent_diffusion,
     text,
+    transcription="",
     seed=42,
     ddim_steps=200,
     duration=10,
@@ -180,7 +187,7 @@ def text_to_audio(
     seed_everything(int(seed))
     waveform = None
 
-    batch = make_batch_for_text_to_audio(text, waveform=waveform, batchsize=batchsize)
+    batch = make_batch_for_text_to_audio(text, transcription=transcription, waveform=waveform, batchsize=batchsize)
 
     latent_diffusion.latent_t_size = duration_to_latent_t_size(duration)
 

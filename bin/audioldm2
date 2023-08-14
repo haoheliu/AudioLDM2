@@ -21,6 +21,14 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--transcription",
+    type=str,
+    required=False,
+    default="",
+    help="Transcription for Text-to-Speech",
+)
+
+parser.add_argument(
     "-tl",
     "--text_list",
     type=str,
@@ -44,7 +52,7 @@ parser.add_argument(
     required=False,
     help="The checkpoint you gonna use",
     default="audioldm2-full",
-    choices=["audioldm2-full", "audioldm2-music-665k", "audioldm2-full-large-650k"]
+    choices=["audioldm2-full", "audioldm2-music-665k", "audioldm2-full-large-1150k","audioldm2-speech-ljspeech","audioldm2-speech-gigaspeech"]
 )
 
 parser.add_argument(
@@ -101,6 +109,16 @@ random_seed = args.seed
 duration = 10
 guidance_scale = args.guidance_scale
 n_candidate_gen_per_text = args.n_candidate_gen_per_text
+transcription = args.transcription
+
+if(transcription):
+    if "speech" not in args.model_name:
+        print("Warning: You choose to perform Text-to-Speech by providing the transcription.However you do not choose the correct model name (audioldm2-speech-gigaspeech or audioldm2-speech-ljspeech).")
+        print("Warning: We will use audioldm2-speech-gigaspeech by default")
+        args.model_name = "audioldm2-speech-gigaspeech"
+    if(not text):
+        print("Warning: You should provide text as a input to describe the speaker. Use default (A male reporter is speaking)")
+        text = "A female reporter is speaking full of emotion"
 
 os.makedirs(save_path, exist_ok=True)
 audioldm2 = build_model(model_name=args.model_name)
@@ -117,9 +135,13 @@ for text in prompt_todo:
     else:
         name = text[:128]
 
+    if(transcription):
+        name += "-TTS-%s" % transcription
+
     waveform = text_to_audio(
         audioldm2,
         text,
+        transcription=transcription, # To avoid the model to ignore the last vocab
         seed=random_seed,
         duration=duration,
         guidance_scale=guidance_scale,

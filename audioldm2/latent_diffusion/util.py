@@ -11,6 +11,42 @@ from queue import Queue
 from inspect import isfunction
 from PIL import Image, ImageDraw, ImageFont
 
+CACHE = {
+    "get_vits_phoneme_ids":{
+        "PAD_LENGTH": 310,
+        "_pad": '_',
+        "_punctuation": ';:,.!?¡¿—…"«»“” ',
+        "_letters": 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
+        "_letters_ipa": "ɑɐɒæɓʙβɔɕçɗɖðʤəɘɚɛɜɝɞɟʄɡɠɢʛɦɧħɥʜɨɪʝɭɬɫɮʟɱɯɰŋɳɲɴøɵɸθœɶʘɹɺɾɻʀʁɽʂʃʈʧʉʊʋⱱʌɣɤʍχʎʏʑʐʒʔʡʕʢǀǁǂǃˈˌːˑʼʴʰʱʲʷˠˤ˞↓↑→↗↘'̩'ᵻ",
+        "_special": "♪☎☒☝⚠"
+    }
+}
+
+CACHE["get_vits_phoneme_ids"]["symbols"] = [CACHE["get_vits_phoneme_ids"]["_pad"]] + list(CACHE["get_vits_phoneme_ids"]["_punctuation"]) + list(CACHE["get_vits_phoneme_ids"]["_letters"]) + list(CACHE["get_vits_phoneme_ids"]["_letters_ipa"]) + list(CACHE["get_vits_phoneme_ids"]["_special"])
+CACHE["get_vits_phoneme_ids"]["_symbol_to_id"] = {s: i for i, s in enumerate(CACHE["get_vits_phoneme_ids"]["symbols"])}
+
+def get_vits_phoneme_ids_no_padding(phonemes):
+    pad_token_id = 0
+    pad_length = CACHE["get_vits_phoneme_ids"]["PAD_LENGTH"]
+    _symbol_to_id = CACHE["get_vits_phoneme_ids"]["_symbol_to_id"]
+    batchsize = len(phonemes)
+
+    clean_text = phonemes[0] + "⚠"
+    sequence = []
+
+    for symbol in clean_text:
+        if(symbol not in _symbol_to_id.keys()):
+            print("%s is not in the vocabulary. %s" % (symbol, clean_text))
+            symbol = "_"
+        symbol_id = _symbol_to_id[symbol]
+        sequence += [symbol_id]
+
+    def _pad_phonemes(phonemes_list):
+        return phonemes_list + [pad_token_id] * (pad_length-len(phonemes_list))
+    
+    sequence = sequence[:pad_length]
+
+    return {"phoneme_idx": torch.LongTensor(_pad_phonemes(sequence)).unsqueeze(0).expand(batchsize, -1)}
 
 def log_txt_as_img(wh, xc, size=10):
     # wh a tuple of (width, height)
