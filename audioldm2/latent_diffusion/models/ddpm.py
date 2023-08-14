@@ -113,6 +113,7 @@ class DDPM(nn.Module):
 
         self.clap = CLAPAudioEmbeddingClassifierFreev2(
             pretrained_path="",
+            enable_cuda=self.device=="cuda",
             sampling_rate=self.sampling_rate,
             embed_mode="audio",
             amodel="HTSAT-base",
@@ -778,7 +779,10 @@ class LatentDiffusion(DDPM):
     def instantiate_cond_stage(self, config):
         self.cond_stage_model_metadata = {}
         for i, cond_model_key in enumerate(config.keys()):
+            if "params" in config[cond_model_key] and "device" in config[cond_model_key]["params"]:
+                config[cond_model_key]["params"]["device"] = self.device
             model = instantiate_from_config(config[cond_model_key])
+            model = model.to(self.device)
             self.cond_stage_models.append(model)
             self.cond_stage_model_metadata[cond_model_key] = {
                 "model_idx": i,
@@ -1430,7 +1434,7 @@ class LatentDiffusion(DDPM):
 
         intermediate = None
         if ddim and not use_plms:
-            ddim_sampler = DDIMSampler(self)
+            ddim_sampler = DDIMSampler(self, device=self.device)
             samples, intermediates = ddim_sampler.sample(
                 ddim_steps,
                 batch_size,

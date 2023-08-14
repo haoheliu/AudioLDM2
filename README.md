@@ -73,7 +73,11 @@ audioldm2 --seed 1234 -t "Musical constellations twinkling in the night sky, for
 You can choose model checkpoint by setting up "model_name":
 
 ```shell
-audioldm2 --model_name "audioldm2-full-large-1150k" -t "Musical constellations twinkling in the night sky, forming a cosmic melody."
+# CUDA
+audioldm2 --model_name "audioldm2-full-large-1150k" --device cuda -t "Musical constellations twinkling in the night sky, forming a cosmic melody."
+
+# MPS
+audioldm2 --model_name "audioldm2-full-large-1150k" --device mps -t "Musical constellations twinkling in the night sky, forming a cosmic melody."
 ```
 
 We have three checkpoints you can choose for now:
@@ -83,10 +87,17 @@ We have three checkpoints you can choose for now:
 4. **audioldm2-speech-gigaspeech**: Text-to-Speech checkpoint that is trained on GigaSpeech Dataset.
 5. **audioldm2-speech-ljspeech**: Text-to-Speech checkpoint that is trained on LJSpeech Dataset.
 
+We currently support 3 devices:
+- cpu
+- cuda
+- mps ( Notice that the computation requires about 20GB of RAM. )
+
 ## Other options
 ```shell
-  usage: audioldm2 [-h] [-t TEXT] [-tl TEXT_LIST] [-s SAVE_PATH] [--model_name {audioldm2-full,audioldm2-music-665k,audioldm2-full-large-1150k,audioldm2-speech-ljspeech,audioldm2-speech-gigaspeech}] [-b BATCHSIZE] [--ddim_steps DDIM_STEPS] [-gs GUIDANCE_SCALE]
-                  [-n N_CANDIDATE_GEN_PER_TEXT] [--seed SEED]
+  usage: audioldm2 [-h] [-t TEXT] [-tl TEXT_LIST] [-s SAVE_PATH]
+                 [--model_name {audioldm2-full,audioldm2-music-665k,audioldm2-full-large-1150k,audioldm2-speech-ljspeech,audioldm2-speech-gigaspeech}] [-d DEVICE]
+                 [-b BATCHSIZE] [--ddim_steps DDIM_STEPS] [-gs GUIDANCE_SCALE] [-n N_CANDIDATE_GEN_PER_TEXT]
+                 [--seed SEED]
 
   optional arguments:
     -h, --help            show this help message and exit
@@ -99,6 +110,8 @@ We have three checkpoints you can choose for now:
                           The path to save model output
     --model_name {audioldm2-full,audioldm2-music-665k,audioldm2-full-large-1150k,audioldm2-speech-ljspeech,audioldm2-speech-gigaspeech}
                           The checkpoint you gonna use
+    -d DEVICE, --device DEVICE
+                          The device for computation. If not specified, the script will automatically choose the device based on your environment. [cpu, cuda, mps, auto]
     -b BATCHSIZE, --batchsize BATCHSIZE
                           Generate how many samples at the same time
     --ddim_steps DDIM_STEPS
