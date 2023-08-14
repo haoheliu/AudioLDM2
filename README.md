@@ -4,6 +4,16 @@
 
 This repo currently support Text-to-Audio (including Music) and Text-to-Speech Generation. 
 
+* [TODO](#todo)
+* [Web APP](#web-app)
+* [Commandline Usage](#commandline-usage)
+  + [Installation](#installation)
+  + [Run the model in commandline](#run-the-model-in-commandline)
+* [Random Seed Matters](#random-seed-matters)
+* [Pretrained Models](#pretrained-models)
+* [Other options](#other-options)
+* [Cite this work](#cite-this-work)
+
 <hr>
 
 ## TODO
@@ -39,7 +49,7 @@ conda create -n audioldm python=3.8; conda activate audioldm
 pip3 install git+https://github.com/haoheliu/AudioLDM2.git
 ```
 
-Please make sure you have installed [espeak](https://espeak.sourceforge.net/download.html). On linux you can do it by 
+If you plan to play around with text-to-speech generation. Please also make sure you have installed [espeak](https://espeak.sourceforge.net/download.html). On linux you can do it by 
 ```shell
 sudo apt-get install espeak
 ```
@@ -61,9 +71,7 @@ audioldm2 -tl batch.lst
 
 ```shell
 audioldm2 -t "A female reporter is speaking full of emotion" --transciption "Wish you have a good day"
-```
 
-```shell
 audioldm2 -t "A female reporter is speaking" --transciption "Wish you have a good day"
 ```
 
@@ -88,12 +96,13 @@ audioldm2 --model_name "audioldm2-full-large-1150k" --device cuda -t "Musical co
 audioldm2 --model_name "audioldm2-full-large-1150k" --device mps -t "Musical constellations twinkling in the night sky, forming a cosmic melody."
 ```
 
-We have three checkpoints you can choose for now:
-1. **audioldm2-full** (default): This checkpoint can perform both sound effect and music generation. 
-2. **audioldm2-full-large-1150k**: This checkpoint is the larger version of audioldm2-full. 
-3. **audioldm2-music-665k**: This checkpoint is specialized on music generation. 
-4. **audioldm2-speech-gigaspeech**: Text-to-Speech checkpoint that is trained on GigaSpeech Dataset.
-5. **audioldm2-speech-ljspeech**: Text-to-Speech checkpoint that is trained on LJSpeech Dataset.
+We have five checkpoints you can choose:
+
+1. **audioldm2-full** (default): Generate both sound effect and music generation. 
+2. **audioldm2-full-large-1150k**: Larger version of audioldm2-full. 
+3. **audioldm2-music-665k**: Music generation. 
+4. **audioldm2-speech-gigaspeech** (default for TTS): Text-to-Speech, trained on GigaSpeech Dataset.
+5. **audioldm2-speech-ljspeech**: Text-to-Speech, trained on LJSpeech Dataset.
 
 We currently support 3 devices:
 - cpu
