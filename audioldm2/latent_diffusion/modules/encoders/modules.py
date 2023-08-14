@@ -95,6 +95,8 @@ class PhonemeEncoder(nn.Module):
         if self.device is None:
             self.device = self.learnable_positional_embedding.device
             self.pad_token_sequence = self.pad_token_sequence.to(self.device)
+        
+        phoneme_idx = phoneme_idx.to(self.device)
 
         src_length = self._get_src_length(phoneme_idx)
         text_emb, m, logs, text_emb_mask = self.text_encoder(phoneme_idx, src_length)
@@ -518,11 +520,11 @@ class AudioMAEConditionCTPoolRand(nn.Module):
     # Required
     def forward(self, batch, time_pool=None, freq_pool=None):
         assert batch.size(-2) == 1024 and batch.size(-1) == 128
-
+        
         if self.device is None:
-            self.device = batch.device
+            self.device = next(self.audiomae.parameters()).device
 
-        batch = batch.unsqueeze(1)
+        batch = batch.unsqueeze(1).to(self.device)
         with torch.no_grad():
             representation = self.audiomae(
                 batch,

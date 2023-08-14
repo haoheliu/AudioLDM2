@@ -115,6 +115,74 @@ def default_audioldm_config(model_name="audioldm2-full"):
     if("-large-" in model_name):
         basic_config["model"]["params"]["unet_config"]["params"]["context_dim"] = [768, 1024, None]
         basic_config["model"]["params"]["unet_config"]["params"]["transformer_depth"] = 2
+    if("-speech-" in model_name):
+        basic_config["model"]["params"]["unet_config"]["params"]["context_dim"] = [768]
+        basic_config["model"]["params"]["cond_stage_config"] = {
+        "crossattn_audiomae_generated": {
+          "cond_stage_key": "all",
+          "conditioning_key": "crossattn",
+          "target": "audioldm2.latent_diffusion.modules.encoders.modules.SequenceGenAudioMAECond",
+          "params": {
+            "always_output_audiomae_gt": False,
+            "learnable": True,
+            "use_gt_mae_output": True,
+            "use_gt_mae_prob": 1,
+            "base_learning_rate": 0.0002,
+            "sequence_gen_length": 512,
+            "use_warmup": True,
+            "sequence_input_key": [
+              "film_clap_cond1",
+              "crossattn_vits_phoneme"
+            ],
+            "sequence_input_embed_dim": [
+              512,
+              192
+            ],
+            "batchsize": 16,
+            "cond_stage_config": {
+              "film_clap_cond1": {
+                "cond_stage_key": "text",
+                "conditioning_key": "film",
+                "target": "audioldm2.latent_diffusion.modules.encoders.modules.CLAPAudioEmbeddingClassifierFreev2",
+                "params": {
+                  "pretrained_path": "/mnt/bn/lqhaoheliu/exps/checkpoints/audioldm/2023_04_07_audioldm_clap_v2_yusong/music_speech_audioset_epoch_15_esc_89.98.pt",
+                  "sampling_rate": 48000,
+                  "embed_mode": "text",
+                  "amodel": "HTSAT-base"
+                }
+              },
+              "crossattn_vits_phoneme": {
+                "cond_stage_key": "phoneme_idx",
+                "conditioning_key": "crossattn",
+                "target": "audioldm2.latent_diffusion.modules.encoders.modules.PhonemeEncoder",
+                "params": {
+                  "vocabs_size": 183,
+                  "pad_token_id": 0,
+                  "pad_length": 310
+                }
+              },
+              "crossattn_audiomae_pooled": {
+                "cond_stage_key": "ta_kaldi_fbank",
+                "conditioning_key": "crossattn",
+                "target": "audioldm2.latent_diffusion.modules.encoders.modules.AudioMAEConditionCTPoolRand",
+                "params": {
+                  "regularization": False,
+                  "no_audiomae_mask": True,
+                  "time_pooling_factors": [
+                    1
+                  ],
+                  "freq_pooling_factors": [
+                    1
+                  ],
+                  "eval_time_pooling": 1,
+                  "eval_freq_pooling": 1,
+                  "mask_ratio": 0
+                }
+              }
+            }
+          }
+        }
+    }
     return basic_config
 
 class MyProgressBar:
@@ -133,7 +201,11 @@ class MyProgressBar:
             self.pbar.finish()
 
 def download_checkpoint(checkpoint_name="audioldm2-full"):
-    model_id = "haoheliu/%s" % checkpoint_name
+    if("audioldm2-speech" in checkpoint_name):
+        model_id = "haoheliu/audioldm2-speech"
+    else:
+        model_id = "haoheliu/%s" % checkpoint_name
+
     checkpoint_path = hf_hub_download(
         repo_id=model_id,
         filename=checkpoint_name+".pth"
@@ -280,7 +352,7 @@ def get_basic_config():
                             "learnable": True,
                             "device": "cuda",
                             "use_gt_mae_output": True,
-                            "use_gt_mae_prob": 0.25,
+                            "use_gt_mae_prob": 0.0,
                             "base_learning_rate": 0.0002,
                             "sequence_gen_length": 8,
                             "use_warmup": True,
