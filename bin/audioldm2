@@ -51,7 +51,7 @@ parser.add_argument(
     type=str,
     required=False,
     help="The checkpoint you gonna use",
-    default="audioldm_48k",
+    default="audioldm2-full",
     choices=["audioldm_48k", "audioldm_16k_crossattn_t5", "audioldm2-full", "audioldm2-music-665k", "audioldm2-full-large-1150k","audioldm2-speech-ljspeech","audioldm2-speech-gigaspeech"]
 )
 

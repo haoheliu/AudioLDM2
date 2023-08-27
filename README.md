@@ -85,16 +85,16 @@ You can choose model checkpoint by setting up "model_name":
 
 ```shell
 # CUDA
-audioldm2 --model_name "audioldm_48k" --device cuda -t "Musical constellations twinkling in the night sky, forming a cosmic melody."
+audioldm2 --model_name "audioldm2-full" --device cuda -t "Musical constellations twinkling in the night sky, forming a cosmic melody."
 
 # MPS
-audioldm2 --model_name "audioldm_48k" --device mps -t "Musical constellations twinkling in the night sky, forming a cosmic melody."
+audioldm2 --model_name "audioldm2-full" --device mps -t "Musical constellations twinkling in the night sky, forming a cosmic melody."
 ```
 
 We have five checkpoints you can choose:
 
-1. **audioldm_48k** (default): This checkpoint can generate high fidelity sound effect and music.
-2. **audioldm2-full**: Generate both sound effect and music generation with the AudioLDM2 architecture. 
+1. **audioldm2-full** (default): Generate both sound effect and music generation with the AudioLDM2 architecture. 
+2. **audioldm_48k**: This checkpoint can generate high fidelity sound effect and music.
 2. **audioldm_16k_crossattn_t5**: The improved version of [AudioLDM 1.0](https://github.com/haoheliu/AudioLDM).
 4. **audioldm2-full-large-1150k**: Larger version of audioldm2-full. 
 5. **audioldm2-music-665k**: Music generation. 
