@@ -50,7 +50,7 @@ def seed_everything(seed):
     torch.backends.cudnn.benchmark = True
 
 
-def save_wave(waveform, savepath, name="outwav"):
+def save_wave(waveform, savepath, name="outwav", samplerate=16000):
     if type(name) is not list:
         name = [name] * waveform.shape[0]
 
@@ -69,7 +69,7 @@ def save_wave(waveform, savepath, name="outwav"):
             savepath, fname
         )
         print("Save audio to %s" % path)
-        sf.write(path, waveform[i, 0], samplerate=16000)
+        sf.write(path, waveform[i, 0], samplerate=samplerate)
 
 
 def exists(x):
@@ -183,6 +183,10 @@ def default_audioldm_config(model_name="audioldm2-full"):
           }
         }
     }
+    if("48k" in model_name):
+        basic_config=get_audioldm_48k_config()
+    if("t5" in model_name):
+        basic_config=get_audioldm_crossattn_t5_config()
     return basic_config
 
 class MyProgressBar:
@@ -404,3 +408,298 @@ def get_basic_config():
             },
         },
     }
+
+def get_audioldm_48k_config():
+    return {
+            "variables": {
+                "sampling_rate": 48000,
+                "latent_embed_dim": 16,
+                "mel_bins": 256,
+                "latent_t_size": 128,
+                "latent_f_size": 32,
+                "in_channels": 16,
+                "optimize_ddpm_parameter": True,
+                "warmup_steps": 5000
+            },
+            "step": {
+                "validation_every_n_epochs": 1,
+                "save_checkpoint_every_n_steps": 5000,
+                "limit_val_batches": 10,
+                "max_steps": 1500000,
+                "save_top_k": 2
+            },
+            "preprocessing": {
+                "audio": {
+                "sampling_rate": 48000,
+                "max_wav_value": 32768,
+                "duration": 10.24
+                },
+                "stft": {
+                "filter_length": 2048,
+                "hop_length": 480,
+                "win_length": 2048
+                },
+                "mel": {
+                "n_mel_channels": 256,
+                "mel_fmin": 20,
+                "mel_fmax": 24000
+                }
+            },
+            "augmentation": {
+                "mixup": 0
+            },
+            "model": {
+                "target": "audioldm2.latent_diffusion.models.ddpm.LatentDiffusion",
+                "params": {
+                "first_stage_config": {
+                    "base_learning_rate": 0.000008,
+                    "target": "audioldm2.latent_encoder.autoencoder.AutoencoderKL",
+                    "params": {
+                    "reload_from_ckpt": "/mnt/bn/lqhaoheliu/project/audio_generation_diffusion/log/vae/vae_48k_256/ds_8_kl_1/checkpoints/ckpt-checkpoint-484999.ckpt",
+                    "sampling_rate": 48000,
+                    "batchsize": 4,
+                    "monitor": "val/rec_loss",
+                    "image_key": "fbank",
+                    "subband": 1,
+                    "embed_dim": 16,
+                    "time_shuffle": 1,
+                    "lossconfig": {
+                        "target": "audioldm2.latent_diffusion.modules.losses.LPIPSWithDiscriminator",
+                        "params": {
+                        "disc_start": 50001,
+                        "kl_weight": 1000,
+                        "disc_weight": 0.5,
+                        "disc_in_channels": 1
+                        }
+                    },
+                    "ddconfig": {
+                        "double_z": True,
+                        "mel_bins": 256,
+                        "z_channels": 16,
+                        "resolution": 256,
+                        "downsample_time": False,
+                        "in_channels": 1,
+                        "out_ch": 1,
+                        "ch": 128,
+                        "ch_mult": [
+                        1,
+                        2,
+                        4,
+                        8
+                        ],
+                        "num_res_blocks": 2,
+                        "attn_resolutions": [],
+                        "dropout": 0
+                    }
+                    }
+                },
+                "base_learning_rate": 0.0001,
+                "warmup_steps": 5000,
+                "optimize_ddpm_parameter": True,
+                "sampling_rate": 48000,
+                "batchsize": 16,
+                "linear_start": 0.0015,
+                "linear_end": 0.0195,
+                "num_timesteps_cond": 1,
+                "log_every_t": 200,
+                "timesteps": 1000,
+                "unconditional_prob_cfg": 0.1,
+                "parameterization": "eps",
+                "first_stage_key": "fbank",
+                "latent_t_size": 128,
+                "latent_f_size": 32,
+                "channels": 16,
+                "monitor": "val/loss_simple_ema",
+                "scale_by_std": True,
+                "unet_config": {
+                    "target": "audioldm2.latent_diffusion.modules.diffusionmodules.openaimodel.UNetModel",
+                    "params": {
+                    "image_size": 64,
+                    "extra_film_condition_dim": 512,
+                    "context_dim": [
+                        None
+                    ],
+                    "in_channels": 16,
+                    "out_channels": 16,
+                    "model_channels": 128,
+                    "attention_resolutions": [
+                        8,
+                        4,
+                        2
+                    ],
+                    "num_res_blocks": 2,
+                    "channel_mult": [
+                        1,
+                        2,
+                        3,
+                        5
+                    ],
+                    "num_head_channels": 32,
+                    "use_spatial_transformer": True,
+                    "transformer_depth": 1
+                    }
+                },
+                "evaluation_params": {
+                    "unconditional_guidance_scale": 3.5,
+                    "ddim_sampling_steps": 200,
+                    "n_candidates_per_samples": 3
+                },
+                "cond_stage_config": {
+                    "film_clap_cond1": {
+                    "cond_stage_key": "text",
+                    "conditioning_key": "film",
+                    "target": "audioldm2.latent_diffusion.modules.encoders.modules.CLAPAudioEmbeddingClassifierFreev2",
+                    "params": {
+                        "pretrained_path": "/mnt/bn/lqhaoheliu/exps/checkpoints/audioldm/2023_04_07_audioldm_clap_v2_yusong/music_speech_audioset_epoch_15_esc_89.98.pt",
+                        "sampling_rate": 48000,
+                        "embed_mode": "text",
+                        "amodel": "HTSAT-base"
+                    }
+                    }
+                }
+                }
+            }
+            }
+
+def get_audioldm_crossattn_t5_config():
+    return {
+        "variables": {
+            "sampling_rate": 16000,
+            "mel_bins": 64,
+            "latent_embed_dim": 8,
+            "latent_t_size": 256,
+            "latent_f_size": 16,
+            "in_channels": 8,
+            "optimize_ddpm_parameter": True,
+            "warmup_steps": 5000
+        },
+        "step": {
+            "validation_every_n_epochs": 1,
+            "save_checkpoint_every_n_steps": 5000,
+            "max_steps": 1500000,
+            "save_top_k": 2
+        },
+        "preprocessing": {
+            "audio": {
+            "sampling_rate": 16000,
+            "max_wav_value": 32768,
+            "duration": 10.24
+            },
+            "stft": {
+            "filter_length": 1024,
+            "hop_length": 160,
+            "win_length": 1024
+            },
+            "mel": {
+            "n_mel_channels": 64,
+            "mel_fmin": 0,
+            "mel_fmax": 8000
+            }
+        },
+        "augmentation": {
+            "mixup": 0
+        },
+        "model": {
+            "target": "audioldm2.latent_diffusion.models.ddpm.LatentDiffusion",
+            "params": {
+            "first_stage_config": {
+                "base_learning_rate": 0.000008,
+                "target": "audioldm2.latent_encoder.autoencoder.AutoencoderKL",
+                "params": {
+                "reload_from_ckpt": "/mnt/bn/lqhaoheliu/exps/checkpoints/audioldm/vae_32k/2023_06_22_vae_16k_64_4/last.ckpt",
+                "sampling_rate": 16000,
+                "batchsize": 4,
+                "monitor": "val/rec_loss",
+                "image_key": "fbank",
+                "subband": 1,
+                "embed_dim": 8,
+                "time_shuffle": 1,
+                "lossconfig": {
+                    "target": "audioldm2.latent_diffusion.modules.losses.LPIPSWithDiscriminator",
+                    "params": {
+                    "disc_start": 50001,
+                    "kl_weight": 1000,
+                    "disc_weight": 0.5,
+                    "disc_in_channels": 1
+                    }
+                },
+                "ddconfig": {
+                    "double_z": True,
+                    "mel_bins": 64,
+                    "z_channels": 8,
+                    "resolution": 256,
+                    "downsample_time": False,
+                    "in_channels": 1,
+                    "out_ch": 1,
+                    "ch": 128,
+                    "ch_mult": [
+                    1,
+                    2,
+                    4
+                    ],
+                    "num_res_blocks": 2,
+                    "attn_resolutions": [],
+                    "dropout": 0
+                }
+                }
+            },
+            "base_learning_rate": 0.0001,
+            "warmup_steps": 5000,
+            "optimize_ddpm_parameter": True,
+            "sampling_rate": 16000,
+            "batchsize": 16,
+            "linear_start": 0.0015,
+            "linear_end": 0.0195,
+            "num_timesteps_cond": 1,
+            "log_every_t": 200,
+            "timesteps": 1000,
+            "unconditional_prob_cfg": 0.1,
+            "parameterization": "eps",
+            "first_stage_key": "fbank",
+            "latent_t_size": 256,
+            "latent_f_size": 16,
+            "channels": 8,
+            "monitor": "val/loss_simple_ema",
+            "scale_by_std": True,
+            "unet_config": {
+                "target": "audioldm2.latent_diffusion.modules.diffusionmodules.openaimodel.UNetModel",
+                "params": {
+                "image_size": 64,
+                "context_dim": [
+                    1024
+                ],
+                "in_channels": 8,
+                "out_channels": 8,
+                "model_channels": 128,
+                "attention_resolutions": [
+                    8,
+                    4,
+                    2
+                ],
+                "num_res_blocks": 2,
+                "channel_mult": [
+                    1,
+                    2,
+                    3,
+                    5
+                ],
+                "num_head_channels": 32,
+                "use_spatial_transformer": True,
+                "transformer_depth": 1
+                }
+            },
+            "evaluation_params": {
+                "unconditional_guidance_scale": 3.5,
+                "ddim_sampling_steps": 200,
+                "n_candidates_per_samples": 3
+            },
+            "cond_stage_config": {
+                "crossattn_flan_t5": {
+                "cond_stage_key": "text",
+                "conditioning_key": "crossattn",
+                "target": "audioldm2.latent_diffusion.modules.encoders.modules.FlanT5HiddenState"
+                }
+            }
+            }
+        }
+        }

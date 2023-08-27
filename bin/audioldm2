@@ -51,8 +51,8 @@ parser.add_argument(
     type=str,
     required=False,
     help="The checkpoint you gonna use",
-    default="audioldm2-full",
-    choices=["audioldm2-full", "audioldm2-music-665k", "audioldm2-full-large-1150k","audioldm2-speech-ljspeech","audioldm2-speech-gigaspeech"]
+    default="audioldm_48k",
+    choices=["audioldm_48k", "audioldm_16k_crossattn_t5", "audioldm2-full", "audioldm2-music-665k", "audioldm2-full-large-1150k","audioldm2-speech-ljspeech","audioldm2-speech-gigaspeech"]
 )
 
 parser.add_argument(
@@ -91,6 +91,15 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "-dur",
+    "--duration",
+    type=float,
+    required=False,
+    default=10.0,
+    help="The duration of the samples",
+)
+
+parser.add_argument(
     "-n",
     "--n_candidate_gen_per_text",
     type=int,
@@ -115,7 +124,19 @@ save_path = os.path.join(args.save_path, get_time())
 
 text = args.text
 random_seed = args.seed
-duration = 10
+duration = args.duration
+sample_rate=16000
+latent_t_per_second=25.6
+
+if("audioldm2" in args.model_name):
+    print("Warning: For AudioLDM2 we currently only support 10s of generation. Please use audioldm_48k or audioldm_16k_crossattn_t5 if you want a different duration.")
+    duration = 10
+
+# A bit dirty solution
+if("48k" in args.model_name):
+    sample_rate = 48000
+    latent_t_per_second=12.8
+
 guidance_scale = args.guidance_scale
 n_candidate_gen_per_text = args.n_candidate_gen_per_text
 transcription = args.transcription
@@ -157,6 +178,7 @@ for text in prompt_todo:
         ddim_steps=args.ddim_steps,
         n_candidate_gen_per_text=n_candidate_gen_per_text,
         batchsize=args.batchsize,
+        latent_t_per_second=latent_t_per_second
     )
     
-    save_wave(waveform, save_path, name=name)
+    save_wave(waveform, save_path, name=name, samplerate=sample_rate)

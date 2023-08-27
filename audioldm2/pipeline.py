@@ -74,7 +74,8 @@ def extract_kaldi_fbank_feature(waveform, sampling_rate, log_mel_spec):
 
 def make_batch_for_text_to_audio(text, transcription="", waveform=None, fbank=None, batchsize=1):
     text = [text] * batchsize
-    transcription = text2phoneme(transcription)
+    if(transcription):
+        transcription = text2phoneme(transcription)
     transcription = [transcription] * batchsize
 
     if batchsize < 1:
@@ -170,9 +171,6 @@ def build_model(ckpt_path=None, config=None, device=None, model_name="audioldm2-
     
     return latent_diffusion
 
-def duration_to_latent_t_size(duration):
-    return int(duration * 25.6)
-
 def text_to_audio(
     latent_diffusion,
     text,
@@ -183,18 +181,16 @@ def text_to_audio(
     batchsize=1,
     guidance_scale=3.5,
     n_candidate_gen_per_text=3,
+    latent_t_per_second=25.6,
     config=None,
 ):
-    assert (
-        duration == 10
-    ), "Error: Currently we only support 10 seconds of generation. Generating longer files requires some extra coding, which would be a part of the future work."
 
     seed_everything(int(seed))
     waveform = None
 
     batch = make_batch_for_text_to_audio(text, transcription=transcription, waveform=waveform, batchsize=batchsize)
 
-    latent_diffusion.latent_t_size = duration_to_latent_t_size(duration)
+    latent_diffusion.latent_t_size = int(duration * latent_t_per_second)
 
     with torch.no_grad():
         waveform = latent_diffusion.generate_batch(

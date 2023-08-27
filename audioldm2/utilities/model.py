@@ -36,6 +36,44 @@ def get_vocoder_config():
         },
     }
 
+def get_vocoder_config_48k():
+    return {
+        "resblock": "1",
+        "num_gpus": 8,
+        "batch_size": 128,
+        "learning_rate": 0.0001,
+        "adam_b1": 0.8,
+        "adam_b2": 0.99,
+        "lr_decay": 0.999,
+        "seed": 1234,
+
+        "upsample_rates": [6,5,4,2,2],
+        "upsample_kernel_sizes": [12,10,8,4,4],
+        "upsample_initial_channel": 1536,
+        "resblock_kernel_sizes": [3,7,11,15],
+        "resblock_dilation_sizes": [[1,3,5], [1,3,5], [1,3,5], [1,3,5]],
+
+        "segment_size": 15360,
+        "num_mels": 256,
+        "n_fft": 2048,
+        "hop_size": 480,
+        "win_size": 2048,
+
+        "sampling_rate": 48000,
+
+        "fmin": 20,
+        "fmax": 24000,
+        "fmax_for_loss": None,
+
+        "num_workers": 8,
+
+        "dist_config": {
+            "dist_backend": "nccl",
+            "dist_url": "tcp://localhost:18273",
+            "world_size": 1
+        }
+    }
+
 
 def get_available_checkpoint_keys(model, ckpt):
     state_dict = torch.load(ckpt)["state_dict"]
@@ -89,17 +127,30 @@ def get_vocoder(config, device, mel_bins):
         vocoder.mel2wav.eval()
         vocoder.mel2wav.to(device)
     elif name == "HiFi-GAN":
-        config = get_vocoder_config()
-        config = hifigan.AttrDict(config)
-        vocoder = hifigan.Generator_old(config)
-        # print("Load hifigan/g_01080000")
-        # ckpt = torch.load(os.path.join(ROOT, "hifigan/g_01080000"))
-        # ckpt = torch.load(os.path.join(ROOT, "hifigan/g_00660000"))
-        # ckpt = torch_version_orig_mod_remove(ckpt)
-        # vocoder.load_state_dict(ckpt["generator"])
-        vocoder.eval()
-        vocoder.remove_weight_norm()
-        vocoder.to(device)
+        if(mel_bins == 64):
+            config = get_vocoder_config()
+            config = hifigan.AttrDict(config)
+            vocoder = hifigan.Generator_old(config)
+            # print("Load hifigan/g_01080000")
+            # ckpt = torch.load(os.path.join(ROOT, "hifigan/g_01080000"))
+            # ckpt = torch.load(os.path.join(ROOT, "hifigan/g_00660000"))
+            # ckpt = torch_version_orig_mod_remove(ckpt)
+            # vocoder.load_state_dict(ckpt["generator"])
+            vocoder.eval()
+            vocoder.remove_weight_norm()
+            vocoder.to(device)
+        else:
+            config = get_vocoder_config_48k()
+            config = hifigan.AttrDict(config)
+            vocoder = hifigan.Generator_old(config)
+            # print("Load hifigan/g_01080000")
+            # ckpt = torch.load(os.path.join(ROOT, "hifigan/g_01080000"))
+            # ckpt = torch.load(os.path.join(ROOT, "hifigan/g_00660000"))
+            # ckpt = torch_version_orig_mod_remove(ckpt)
+            # vocoder.load_state_dict(ckpt["generator"])
+            vocoder.eval()
+            vocoder.remove_weight_norm()
+            vocoder.to(device)
     return vocoder
 
 

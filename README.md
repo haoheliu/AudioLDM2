@@ -4,25 +4,20 @@
 
 This repo currently support Text-to-Audio (including Music) and Text-to-Speech Generation. 
 
-* [TODO](#todo)
-* [Web APP](#web-app)
-* [Commandline Usage](#commandline-usage)
-  + [Installation](#installation)
-  + [Run the model in commandline](#run-the-model-in-commandline)
-* [Random Seed Matters](#random-seed-matters)
-* [Pretrained Models](#pretrained-models)
-* [Other options](#other-options)
-* [Cite this work](#cite-this-work)
-
 <hr>
+
+## Change Log
+- 2023-08-27: Add two new checkpoints! 
+  - 🌟 **48kHz AudioLDM model**: Now we support high-fidelity audio generation! Use this checkpoint simply by setting "--model_name audioldm_48k"
+  - **16kHz improved AudioLDM model**: Trained with more data and optimized model architecture.
 
 ## TODO
 - [x] Add the text-to-speech checkpoint
-- [ ] Add the text-to-audio checkpoint that does not use FLAN-T5 Cross Attention
 - [ ] Open-source the AudioLDM training code.
-- [ ] Support the generation of longer audio (> 10s)
-- [ ] Optimizing the inference speed of the model.
+- [x] Support the generation of longer audio (> 10s)
+- [x] Optimizing the inference speed of the model.
 - [ ] Integration with the Diffusers library
+- [ ] Add the style-transfer and inpainting code for the audioldm_48k checkpoint (PR welcomed, same logic as [AudioLDMv1](https://github.com/haoheliu/AudioLDM))
 
 ## Web APP
 
@@ -90,19 +85,21 @@ You can choose model checkpoint by setting up "model_name":
 
 ```shell
 # CUDA
-audioldm2 --model_name "audioldm2-full-large-1150k" --device cuda -t "Musical constellations twinkling in the night sky, forming a cosmic melody."
+audioldm2 --model_name "audioldm_48k" --device cuda -t "Musical constellations twinkling in the night sky, forming a cosmic melody."
 
 # MPS
-audioldm2 --model_name "audioldm2-full-large-1150k" --device mps -t "Musical constellations twinkling in the night sky, forming a cosmic melody."
+audioldm2 --model_name "audioldm_48k" --device mps -t "Musical constellations twinkling in the night sky, forming a cosmic melody."
 ```
 
 We have five checkpoints you can choose:
 
-1. **audioldm2-full** (default): Generate both sound effect and music generation. 
-2. **audioldm2-full-large-1150k**: Larger version of audioldm2-full. 
-3. **audioldm2-music-665k**: Music generation. 
-4. **audioldm2-speech-gigaspeech** (default for TTS): Text-to-Speech, trained on GigaSpeech Dataset.
-5. **audioldm2-speech-ljspeech**: Text-to-Speech, trained on LJSpeech Dataset.
+1. **audioldm_48k** (default): This checkpoint can generate high fidelity sound effect and music.
+2. **audioldm2-full**: Generate both sound effect and music generation with the AudioLDM2 architecture. 
+2. **audioldm_16k_crossattn_t5**: The improved version of [AudioLDM 1.0](https://github.com/haoheliu/AudioLDM).
+4. **audioldm2-full-large-1150k**: Larger version of audioldm2-full. 
+5. **audioldm2-music-665k**: Music generation. 
+6. **audioldm2-speech-gigaspeech** (default for TTS): Text-to-Speech, trained on GigaSpeech Dataset.
+7. **audioldm2-speech-ljspeech**: Text-to-Speech, trained on LJSpeech Dataset.
 
 We currently support 3 devices:
 - cpu
@@ -112,7 +109,7 @@ We currently support 3 devices:
 ## Other options
 ```shell
   usage: audioldm2 [-h] [-t TEXT] [-tl TEXT_LIST] [-s SAVE_PATH]
-                 [--model_name {audioldm2-full,audioldm2-music-665k,audioldm2-full-large-1150k,audioldm2-speech-ljspeech,audioldm2-speech-gigaspeech}] [-d DEVICE]
+                 [--model_name {audioldm_48k, audioldm_16k_crossattn_t5, audioldm2-full,audioldm2-music-665k,audioldm2-full-large-1150k,audioldm2-speech-ljspeech,audioldm2-speech-gigaspeech}] [-d DEVICE]
                  [-b BATCHSIZE] [--ddim_steps DDIM_STEPS] [-gs GUIDANCE_SCALE] [-n N_CANDIDATE_GEN_PER_TEXT]
                  [--seed SEED]
 
@@ -132,6 +129,8 @@ We currently support 3 devices:
     -b BATCHSIZE, --batchsize BATCHSIZE
                           Generate how many samples at the same time
     --ddim_steps DDIM_STEPS
+    -dur DURATION, --duration DURATION
+                        The duration of the samples
                           The sampling step for DDIM
     -gs GUIDANCE_SCALE, --guidance_scale GUIDANCE_SCALE
                           Guidance scale (Large => better quality and relavancy to text; Small => better diversity)
