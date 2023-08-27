@@ -145,7 +145,6 @@ def default_audioldm_config(model_name="audioldm2-full"):
                 "conditioning_key": "film",
                 "target": "audioldm2.latent_diffusion.modules.encoders.modules.CLAPAudioEmbeddingClassifierFreev2",
                 "params": {
-                  "pretrained_path": "/mnt/bn/lqhaoheliu/exps/checkpoints/audioldm/2023_04_07_audioldm_clap_v2_yusong/music_speech_audioset_epoch_15_esc_89.98.pt",
                   "sampling_rate": 48000,
                   "embed_mode": "text",
                   "amodel": "HTSAT-base"
@@ -218,7 +217,6 @@ def download_checkpoint(checkpoint_name="audioldm2-full"):
 
 def get_basic_config():
     return {
-        "metadata_root": "/mnt/bn/lqhaoheliu/metadata/processed/dataset_root.json",
         "log_directory": "./log/audiomae_pred",
         "precision": "high",
         "data": {
@@ -455,7 +453,6 @@ def get_audioldm_48k_config():
                     "base_learning_rate": 0.000008,
                     "target": "audioldm2.latent_encoder.autoencoder.AutoencoderKL",
                     "params": {
-                    "reload_from_ckpt": "/mnt/bn/lqhaoheliu/project/audio_generation_diffusion/log/vae/vae_48k_256/ds_8_kl_1/checkpoints/ckpt-checkpoint-484999.ckpt",
                     "sampling_rate": 48000,
                     "batchsize": 4,
                     "monitor": "val/rec_loss",
@@ -550,7 +547,6 @@ def get_audioldm_48k_config():
                     "conditioning_key": "film",
                     "target": "audioldm2.latent_diffusion.modules.encoders.modules.CLAPAudioEmbeddingClassifierFreev2",
                     "params": {
-                        "pretrained_path": "/mnt/bn/lqhaoheliu/exps/checkpoints/audioldm/2023_04_07_audioldm_clap_v2_yusong/music_speech_audioset_epoch_15_esc_89.98.pt",
                         "sampling_rate": 48000,
                         "embed_mode": "text",
                         "amodel": "HTSAT-base"
@@ -606,7 +602,6 @@ def get_audioldm_crossattn_t5_config():
                 "base_learning_rate": 0.000008,
                 "target": "audioldm2.latent_encoder.autoencoder.AutoencoderKL",
                 "params": {
-                "reload_from_ckpt": "/mnt/bn/lqhaoheliu/exps/checkpoints/audioldm/vae_32k/2023_06_22_vae_16k_64_4/last.ckpt",
                 "sampling_rate": 16000,
                 "batchsize": 4,
                 "monitor": "val/rec_loss",

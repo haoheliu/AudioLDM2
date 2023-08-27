@@ -299,14 +299,6 @@ with iface:
         gr.Examples(
             [
                 [
-                    "An excited crowd cheering at a sports game.",
-                    10,
-                    3.5,
-                    45,
-                    3,
-                    default_checkpoint,
-                ],
-                [
                     "A cat is meowing for attention.",
                     10,
                     3.5,
