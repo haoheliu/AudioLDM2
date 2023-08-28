@@ -8,7 +8,7 @@ This repo currently support Text-to-Audio (including Music) and Text-to-Speech G
 
 ## Change Log
 - 2023-08-27: Add two new checkpoints! 
-  - 🌟 **48kHz AudioLDM model**: Now we support high-fidelity audio generation! Use this checkpoint simply by setting "--model_name audioldm_48k"
+  - 🌟 **48kHz AudioLDM model**: Now we support high-fidelity audio generation! [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/haoheliu/AudioLDM_48K_Text-to-HiFiAudio_Generation)  
   - **16kHz improved AudioLDM model**: Trained with more data and optimized model architecture.
 
 ## TODO
