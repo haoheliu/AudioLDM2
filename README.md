@@ -145,7 +145,7 @@ We currently support 3 devices:
 AudioLDM 2 is available in the Hugging Face [🧨 Diffusers](https://github.com/huggingface/diffusers) library from v0.21.0 
 onwards. The official checkpoints can be found on the [Hugging Face Hub](https://huggingface.co/cvssp/audioldm2#checkpoint-details), 
 alongside [documentation](https://huggingface.co/docs/diffusers/main/en/api/pipelines/audioldm2) and 
-[examples scripts](https://huggingface.co/docs/diffusers/main/en/api/pipelines/audioldm2).
+[examples scripts](https://colab.research.google.com/github/sanchit-gandhi/notebooks/blob/main/AudioLDM-2.ipynb).
 
 The Diffusers version of the code runs upwards of **3x faster** than the native AudioLDM 2 implementation, and supports 
 generating audios of arbitrary length.
