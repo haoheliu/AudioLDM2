@@ -16,7 +16,7 @@ This repo currently support Text-to-Audio (including Music) and Text-to-Speech G
 - [ ] Open-source the AudioLDM training code.
 - [x] Support the generation of longer audio (> 10s)
 - [x] Optimizing the inference speed of the model.
-- [ ] Integration with the Diffusers library
+- [x] Integration with the Diffusers library (see [🧨 Diffusers](#hugging-face--diffusers))
 - [ ] Add the style-transfer and inpainting code for the audioldm_48k checkpoint (PR welcomed, same logic as [AudioLDMv1](https://github.com/haoheliu/AudioLDM))
 
 ## Web APP
@@ -139,6 +139,45 @@ We currently support 3 devices:
                           heavier computation
     --seed SEED           Change this value (any integer number) will lead to a different generation result.
 ```
+
+# Hugging Face 🧨 Diffusers
+
+AudioLDM 2 is available in the Hugging Face [🧨 Diffusers](https://github.com/huggingface/diffusers) library from v0.21.0 
+onwards. The official checkpoints can be found on the [Hugging Face Hub](https://huggingface.co/cvssp/audioldm2#checkpoint-details), 
+alongside [documentation](https://huggingface.co/docs/diffusers/main/en/api/pipelines/audioldm2) and 
+[examples scripts](https://colab.research.google.com/github/sanchit-gandhi/notebooks/blob/main/AudioLDM-2.ipynb).
+
+The Diffusers version of the code runs upwards of **3x faster** than the native AudioLDM 2 implementation, and supports 
+generating audios of arbitrary length.
+
+To install 🧨 Diffusers and 🤗 Transformers, run:
+
+```bash
+pip install --upgrade git+https://github.com/huggingface/diffusers.git transformers accelerate
+```
+
+You can then load pre-trained weights into the [AudioLDM2 pipeline](https://huggingface.co/docs/diffusers/main/en/api/pipelines/audioldm2),
+and generate text-conditional audio outputs by providing a text prompt:
+
+```python
+from diffusers import AudioLDM2Pipeline
+import torch
+import scipy
+
+repo_id = "cvssp/audioldm2"
+pipe = AudioLDM2Pipeline.from_pretrained(repo_id, torch_dtype=torch.float16)
+pipe = pipe.to("cuda")
+
+prompt = "Techno music with a strong, upbeat tempo and high melodic riffs."
+audio = pipe(prompt, num_inference_steps=200, audio_length_in_s=10.0).audios[0]
+
+scipy.io.wavfile.write("techno.wav", rate=16000, data=audio)
+```
+
+Tips for obtaining high-quality generations can be found under the AudioLDM 2 [docs](https://huggingface.co/docs/diffusers/main/en/api/pipelines/audioldm2#tips),
+including the use of prompt engineering and negative prompting.
+
+Tips for optimising inference speed can be found in the blog post [AudioLDM 2, but faster ⚡️](https://huggingface.co/blog/audioldm2).
 
 ## Cite this work
 If you found this tool useful, please consider citing
