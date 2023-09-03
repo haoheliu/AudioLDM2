@@ -65,9 +65,9 @@ audioldm2 -tl batch.lst
 - Generate speech based on (1) the transcription and (2) the description of the speaker
 
 ```shell
-audioldm2 -t "A female reporter is speaking full of emotion" --transciption "Wish you have a good day"
+audioldm2 -t "A female reporter is speaking full of emotion" --transcription "Wish you have a good day"
 
-audioldm2 -t "A female reporter is speaking" --transciption "Wish you have a good day"
+audioldm2 -t "A female reporter is speaking" --transcription "Wish you have a good day"
 ```
 
 Text-to-Speech use the *audioldm2-speech-gigaspeech* checkpoint by default. If you like to run TTS with LJSpeech pretrained checkpoint, simply set *--model_name audioldm2-speech-ljspeech*.
