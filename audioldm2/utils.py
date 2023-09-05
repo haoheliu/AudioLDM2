@@ -64,7 +64,10 @@ def save_wave(waveform, savepath, name="outwav", samplerate=16000):
                 )
         else:
             fname = "%s.wav" % os.path.basename(name[i]) if (not ".wav" in name[i]) else os.path.basename(name[i]).split(".")[0]
-            
+            # Avoid the file name too long to be saved
+            if len(fname) > 255:
+                fname = f"{hex(hash(fname))}.wav"
+
         path = os.path.join(
             savepath, fname
         )
