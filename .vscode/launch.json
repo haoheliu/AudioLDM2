@@ -1,0 +1,31 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "tts",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/audioldm2",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "-t", "A female reporter is speaking full of emotion",
+                "--transcription", "I have a dream"
+            ]
+        },
+        {
+            "name": "sr_ip",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/audioldm2",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "-t", "A female reporter is speaking full of emotion",
+                "--transcription", "I have a dream",
+                "--file_path", "speech.wav",
+                "--mode", "sr_ip"
+            ]
+        }
+    ]
+}
