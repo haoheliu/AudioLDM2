@@ -13,7 +13,7 @@ This repo currently support Text-to-Audio (including Music) and Text-to-Speech G
 
 ## TODO
 - [x] Add the text-to-speech checkpoint
-- [ ] Open-source the AudioLDM training code.
+- [x] Open-source the [AudioLDM training code](https://github.com/haoheliu/AudioLDM-training-finetuning).
 - [x] Support the generation of longer audio (> 10s)
 - [x] Optimizing the inference speed of the model.
 - [x] Integration with the Diffusers library (see [🧨 Diffusers](#hugging-face--diffusers))
