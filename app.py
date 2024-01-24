@@ -8,34 +8,29 @@ from share_btn import community_icon_html, loading_icon_html, share_js
 
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
-# default_checkpoint="audioldm2-full"
-default_checkpoint="audioldm_48k"
+default_checkpoint="audioldm2-full"
 audioldm = None
 current_model_name = None
 
 def text2audio(
     text,
-    duration,
     guidance_scale,
     random_seed,
     n_candidates,
-    model_name=default_checkpoint,
+    duration,
+    model_name,
 ):
     global audioldm, current_model_name
     torch.set_float32_matmul_precision("high")
+
+    print(text, guidance_scale, random_seed, n_candidates, duration, model_name)
 
     if audioldm is None or model_name != current_model_name:
         audioldm = build_model(model_name=model_name)
         current_model_name = model_name
         # audioldm = torch.compile(audioldm)
-    # print(text, length, guidance_scale)
-    if("48k" in model_name):
-        latent_t_per_second=12.8
-        sample_rate=48000
-    else:
-        latent_t_per_second=25.6
-        sample_rate=16000
 
+    # print(text, length, guidance_scale)
     waveform = text_to_audio(
         latent_diffusion=audioldm,
         text=text,
@@ -43,10 +38,9 @@ def text2audio(
         duration=duration,
         guidance_scale=guidance_scale,
         n_candidate_gen_per_text=int(n_candidates),
-        latent_t_per_second=latent_t_per_second,
     )  # [bs, 1, samples]
     waveform = [
-        gr.make_waveform((sample_rate, wave[0]), bg_image="bg.png") for wave in waveform
+        gr.make_waveform((16000, wave[0]), bg_image="bg.png") for wave in waveform
     ]
     # waveform = [(16000, np.random.randn(16000)), (16000, np.random.randn(16000))]
     if len(waveform) == 1:
@@ -66,6 +60,7 @@ css = """
             border-color: #000000;
             background: #000000;
         }
+
         input[type='range'] {
             accent-color: #000000;
         }
@@ -188,6 +183,7 @@ css = """
           text-align: center;
           font-weight: 900;
         }
+
 """
 iface = gr.Blocks(css=css)
 
@@ -223,7 +219,7 @@ with iface:
     """
     )
     with gr.Group():
-        with gr.Box():
+        with gr.Blocks():
             ############# Input
             textbox = gr.Textbox(
                 value="A forest of wind chimes singing a soothing melody in the breeze.",
@@ -232,14 +228,12 @@ with iface:
                 elem_id="prompt-in",
             )
 
-            with gr.Accordion("Click to modify detailed configurations", open=False):
+            with gr.Accordion("Click to modify detailed configurations", open=True):
                 seed = gr.Number(
                     value=45,
                     label="Change this value (any integer number) will lead to a different generation result.",
                 )
-                duration = gr.Slider(
-                    5, 15, value=10, step=2.5, label="Duration (seconds)"
-                )
+
                 guidance_scale = gr.Slider(
                     0,
                     6,
@@ -254,13 +248,20 @@ with iface:
                     step=1,
                     label="Automatic quality control. This number control the number of candidates (e.g., generate three audios and choose the best to show you). A Larger value usually lead to better quality with heavier computation",
                 )
+                duration = gr.Slider(
+                    2.5, 50, value=10, step=2.5, label="Duration (seconds)"
+                )                
+                # model_name = gr.Dropdown(
+                #       ["audioldm-m-text-ft", "audioldm-s-text-ft", "audioldm-m-full","audioldm-s-full-v2", "audioldm-s-full", "audioldm-l-full"], value="audioldm-m-full", label="Choose the model to use. audioldm-m-text-ft and audioldm-s-text-ft are recommanded. -s- means small, -m- means medium and -l- means large",
+                #   )
                 model_name = gr.Dropdown(
-                      ["audioldm_48k", "audioldm_crossattn_flant5", "audioldm2-full"], value="audioldm_48k",
-                  )
+                      ["audioldm2-full", "audioldm2-full-large-650k","audioldm2-music-665k"], value="audioldm2-full-large-650k", label="Choose the model to use. audioldm-m-text-ft and audioldm-s-text-ft are recommanded. -s- means small, -m- means medium and -l- means large",
+                  )                
             ############# Output
             # outputs=gr.Audio(label="Output", type="numpy")
             outputs = gr.Video(label="Output", elem_id="output-video")
 
+ 
             # with gr.Group(elem_id="container-advanced-btns"):
             #   # advanced_button = gr.Button("Advanced options", elem_id="advanced-btn")
             #   with gr.Group(elem_id="share-btn-container"):
@@ -268,7 +269,7 @@ with iface:
             #     loading_icon = gr.HTML(loading_icon_html, visible=False)
             #     share_button = gr.Button("Share to community", elem_id="share-btn", visible=False)
             # outputs=[gr.Audio(label="Output", type="numpy"), gr.Audio(label="Output", type="numpy")]
-            btn = gr.Button("Submit").style(full_width=True)
+            btn = gr.Button("Submit", elem_id=".gr-Button")
 
         with gr.Group(elem_id="share-btn-container", visible=False):
             community_icon = gr.HTML(community_icon_html)
@@ -279,12 +280,13 @@ with iface:
         #           textbox, duration, guidance_scale, seed, n_candidates, model_name], outputs=[outputs])
         btn.click(
             text2audio,
-            inputs=[textbox, duration, guidance_scale, seed, n_candidates],
+            inputs=[textbox, guidance_scale, seed, n_candidates,duration,model_name],
             outputs=[outputs],
             api_name="text2audio",
+            concurrency_limit=3
         )
 
-        share_button.click(None, [], [], _js=share_js)
+        share_button.click(None, [], [], js=share_js)
         gr.HTML(
             """
         <div class="footer" style="text-align: center; max-width: 700px; margin: 0 auto;">
@@ -299,8 +301,14 @@ with iface:
         gr.Examples(
             [
                 [
+                    "An excited crowd cheering at a sports game.",
+                    3.5,
+                    45,
+                    3,
+                    default_checkpoint,
+                ],
+                [
                     "A cat is meowing for attention.",
-                    10,
                     3.5,
                     45,
                     3,
@@ -308,7 +316,6 @@ with iface:
                 ],
                 [
                     "Birds singing sweetly in a blooming garden.",
-                    10,
                     3.5,
                     45,
                     3,
@@ -316,7 +323,6 @@ with iface:
                 ],
                 [
                     "A modern synthesizer creating futuristic soundscapes.",
-                    10,
                     3.5,
                     45,
                     3,
@@ -324,7 +330,6 @@ with iface:
                 ],
                 [
                     "The vibrant beat of Brazilian samba drums.",
-                    10,
                     3.5,
                     45,
                     3,
@@ -332,10 +337,10 @@ with iface:
                 ],
             ],
             fn=text2audio,
-            inputs=[textbox, duration, guidance_scale, seed, n_candidates, model_name],
-            # inputs=[textbox, guidance_scale, seed, n_candidates],
+            # inputs=[textbox, duration, guidance_scale, seed, n_candidates, model_name],
+            inputs=[textbox, guidance_scale, seed, n_candidates],
             outputs=[outputs],
-            cache_examples=True,
+            cache_examples=False,
         )
         gr.HTML(
             """
@@ -358,6 +363,6 @@ with iface:
             )
 # <p>This demo is strictly for research demo purpose only. For commercial use please <a href="haoheliu@gmail.com">contact us</a>.</p>
 
-iface.queue(concurrency_count=3)
-# iface.launch(debug=True)
-iface.launch(debug=True, share=True)
+iface.launch(debug=True, inbrowser=True, max_threads=10)  # Example setting max threads
+#iface.launch(debug=True,inbrowser=True)
+# iface.launch(debug=True, share=True)
