@@ -53,6 +53,11 @@ def text2audio(
         waveform = waveform[0]
     return waveform
 
+def share_js():
+    # Your JavaScript code goes here
+    print("Button clicked!")
+
+
 css = """
         a {
             color: inherit;
@@ -223,7 +228,7 @@ with iface:
     """
     )
     with gr.Group():
-        with gr.Box():
+        with gr.Column():
             ############# Input
             textbox = gr.Textbox(
                 value="A forest of wind chimes singing a soothing melody in the breeze.",
@@ -268,7 +273,8 @@ with iface:
             #     loading_icon = gr.HTML(loading_icon_html, visible=False)
             #     share_button = gr.Button("Share to community", elem_id="share-btn", visible=False)
             # outputs=[gr.Audio(label="Output", type="numpy"), gr.Audio(label="Output", type="numpy")]
-            btn = gr.Button("Submit").style(full_width=True)
+            btn = gr.Button("Submit")
+            btn.css_class = "gr-btn-full-width"
 
         with gr.Group(elem_id="share-btn-container", visible=False):
             community_icon = gr.HTML(community_icon_html)
@@ -284,7 +290,11 @@ with iface:
             api_name="text2audio",
         )
 
-        share_button.click(None, [], [], _js=share_js)
+        #share_button.click(None, [], [], _js=share_js)
+        #gr.Button("Share to community", elem_id="share-btn", visible=False, onclick=share_js)
+
+        share_button = gr.Button("Share to community", elem_id="share-btn", visible=False)
+        share_button.click(None, [], [])
         gr.HTML(
             """
         <div class="footer" style="text-align: center; max-width: 700px; margin: 0 auto;">
@@ -357,7 +367,14 @@ with iface:
                         """
             )
 # <p>This demo is strictly for research demo purpose only. For commercial use please <a href="haoheliu@gmail.com">contact us</a>.</p>
+#iface.set_concurrency_limit(3)
 
-iface.queue(concurrency_count=3)
+
+#iface.queue(concurrency_count=3)
 # iface.launch(debug=True)
+#iface.launch(debug=True, share=True)
+
+#iface.launch(debug=True, share=True, max_concurrency=3)
+
 iface.launch(debug=True, share=True)
+

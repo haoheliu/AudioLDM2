@@ -39,7 +39,7 @@ REQUIRED = [
     "torchaudio>=0.13.0",
     "torchvision>=0.14.0",
     "tqdm",
-    "gradio",
+    "gradio<3",
     "pyyaml",
     "einops",
     "chardet",
