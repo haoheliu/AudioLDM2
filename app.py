@@ -223,7 +223,7 @@ with iface:
     """
     )
     with gr.Group():
-        with gr.Box():
+        with gr.Blocks():
             ############# Input
             textbox = gr.Textbox(
                 value="A forest of wind chimes singing a soothing melody in the breeze.",
@@ -268,7 +268,7 @@ with iface:
             #     loading_icon = gr.HTML(loading_icon_html, visible=False)
             #     share_button = gr.Button("Share to community", elem_id="share-btn", visible=False)
             # outputs=[gr.Audio(label="Output", type="numpy"), gr.Audio(label="Output", type="numpy")]
-            btn = gr.Button("Submit").style(full_width=True)
+            btn = gr.Button("Submit", elem_id=".gr-Button")
 
         with gr.Group(elem_id="share-btn-container", visible=False):
             community_icon = gr.HTML(community_icon_html)
@@ -282,9 +282,10 @@ with iface:
             inputs=[textbox, duration, guidance_scale, seed, n_candidates],
             outputs=[outputs],
             api_name="text2audio",
+            concurrency_limit=3
         )
 
-        share_button.click(None, [], [], _js=share_js)
+        share_button.click(None, [], [], js=share_js)
         gr.HTML(
             """
         <div class="footer" style="text-align: center; max-width: 700px; margin: 0 auto;">
@@ -358,6 +359,7 @@ with iface:
             )
 # <p>This demo is strictly for research demo purpose only. For commercial use please <a href="haoheliu@gmail.com">contact us</a>.</p>
 
-iface.queue(concurrency_count=3)
+iface.launch(debug=True, inbrowser=True, max_threads=10) 
+#iface.queue(concurrency_count=3)
 # iface.launch(debug=True)
-iface.launch(debug=True, share=True)
+#iface.launch(debug=True, share=True)
