@@ -14,7 +14,7 @@ class Prenet(nn.Module):
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(dropout_rate)
 
-    def forward(self, inputs):
+    def forward(self, inputs): # 메서드에서는 입력을 각 선형 레이어를 통과시키고 ReLU 활성화 함수 및 드롭아웃을 적용
         for linear in self.layers:
             inputs = self.dropout(self.relu(linear(inputs)))
         return inputs

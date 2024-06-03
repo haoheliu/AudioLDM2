@@ -37,7 +37,6 @@ dataset_split = {
     "fsd50k_200_class_label": ["train", "test", "valid"],
 }
 
-
 def freeze_batch_norm_2d(module, module_match={}, name=""):
     """
     Converts all `BatchNorm2d` and `SyncBatchNorm` layers of provided module into `FrozenBatchNorm2d`. If `module` is
@@ -216,19 +215,6 @@ def pad_framewise_output(framewise_output, frames_num):
     """(batch_size, frames_num, classes_num)"""
 
 
-# def process_ipc(index_path, classes_num, filename):
-#     # load data
-#     logging.info("Load Data...............")
-#     ipc = [[] for _ in range(classes_num)]
-#     with h5py.File(index_path, "r") as f:
-#         for i in tqdm(range(len(f["target"]))):
-#             t_class = np.where(f["target"][i])[0]
-#             for t in t_class:
-#                 ipc[t].append(i)
-#     print(ipc)
-#     np.save(filename, ipc)
-#     logging.info("Load Data Succeed...............")
-
 def save_to_dict(s, o_={}):
     sp = s.split(": ")
     o_.update({sp[0]: float(sp[1])})
@@ -352,3 +338,18 @@ def get_optimizer(params, lr, betas, eps, momentum, optimizer_name):
     else:
         raise ValueError("optimizer name is not correct")
     return optimizer
+
+
+
+# def process_ipc(index_path, classes_num, filename):
+#     # load data
+#     logging.info("Load Data...............")
+#     ipc = [[] for _ in range(classes_num)]
+#     with h5py.File(index_path, "r") as f:
+#         for i in tqdm(range(len(f["target"]))):
+#             t_class = np.where(f["target"][i])[0]
+#             for t in t_class:
+#                 ipc[t].append(i)
+#     print(ipc)
+#     np.save(filename, ipc)
+#     logging.info("Load Data Succeed...............")
