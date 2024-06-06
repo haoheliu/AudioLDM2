@@ -35,7 +35,7 @@ parser.add_argument(
     type=str,
     required=False,
     default=None,
-    help="The guidance audio file for generating similar audio",
+    help="The guidance audio file for generating similar audio or for inpainting (dependent on the mode)",
 )
 
 parser.add_argument(

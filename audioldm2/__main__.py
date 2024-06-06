@@ -117,6 +117,15 @@ parser.add_argument(
 	help="Change this value (any integer number) will lead to a different generation result.",
 )
 
+parser.add_argument(
+    "--mode",
+    type=str,
+    required=False,
+    default="generation",
+    help="generation: text-to-audio generation, super_resolution_inpainting: super resolution and inpainting",
+    choices=["generation", "super_resolution_inpainting"]
+)
+
 args = parser.parse_args()
 
 torch.set_float32_matmul_precision("high")
