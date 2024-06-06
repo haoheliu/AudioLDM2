@@ -2,7 +2,7 @@
 import os
 import torch
 import logging
-from audioldm2 import text_to_audio, build_model, save_wave, get_time, read_list
+from audioldm2 import text_to_audio, build_model, save_wave, get_time, read_list, super_resolution_and_inpainting
 import argparse
 
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
@@ -136,6 +136,7 @@ text = args.text
 random_seed = args.seed
 duration = args.duration
 sample_rate = 16000
+latent_t_per_second=25.6
 
 if ("audioldm2" in args.model_name):
 	print(
@@ -143,6 +144,7 @@ if ("audioldm2" in args.model_name):
 	duration = 10
 if ("48k" in args.model_name):
 	sample_rate = 48000
+	latent_t_per_second=12.8
 
 guidance_scale = args.guidance_scale
 n_candidate_gen_per_text = args.n_candidate_gen_per_text
@@ -177,16 +179,34 @@ for text in prompt_todo:
 	if (transcription):
 		name += "-TTS-%s" % transcription
 
-	waveform = text_to_audio(
-		audioldm2,
-		text,
-		transcription=transcription,  # To avoid the model to ignore the last vocab
-		seed=random_seed,
-		duration=duration,
-		guidance_scale=guidance_scale,
-		ddim_steps=args.ddim_steps,
-		n_candidate_gen_per_text=n_candidate_gen_per_text,
-		batchsize=args.batchsize,
-	)
-
-	save_wave(waveform, save_path, name=name, samplerate=sample_rate)
+	if(args.mode == "generation"):
+		waveform = text_to_audio(
+            audioldm2,
+            text,
+            transcription=transcription, # To avoid the model to ignore the last vocab
+            seed=random_seed,
+            duration=duration,
+            guidance_scale=guidance_scale,
+            ddim_steps=args.ddim_steps,
+            n_candidate_gen_per_text=n_candidate_gen_per_text,
+            batchsize=args.batchsize,
+            latent_t_per_second=latent_t_per_second
+        )
+	elif(args.mode == "super_resolution_inpainting"):
+		assert args.file_path is not None
+		assert os.path.exists(args.file_path), "The original audio file \'%s\' for style transfer does not exist." % args.file_path
+		waveform = super_resolution_and_inpainting(
+            latent_diffusion=audioldm2,
+            text=text,
+            transcription=transcription,
+            original_audio_file_path=args.file_path,
+            seed=random_seed,
+            duration=duration,
+            guidance_scale=guidance_scale,
+            n_candidate_gen_per_text=n_candidate_gen_per_text,
+            ddim_steps=args.ddim_steps,
+            batchsize=args.batchsize,
+            latent_t_per_second=latent_t_per_second
+        )
+    
+    save_wave(waveform, save_path, name=name, samplerate=sample_rate)
