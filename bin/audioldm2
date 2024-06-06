@@ -16,8 +16,8 @@ parser.add_argument(
     type=str,
     required=False,
     default="generation",
-    help="generation: text-to-audio generation; transfer: style transfer",
-    choices=["generation", "transfer", "sr_ip"]
+    help="generation: text-to-audio generation, super_resolution_inpainting: super resolution and inpainting",
+    choices=["generation", "super_resolution_inpainting"]
 )
 
 parser.add_argument(
@@ -35,7 +35,7 @@ parser.add_argument(
     type=str,
     required=False,
     default=None,
-    help="(--mode transfer): Original audio file for style transfer; Or (--mode generation): the guidance audio file for generating simialr audio",
+    help="The guidance audio file for generating similar audio",
 )
 
 parser.add_argument(
@@ -199,7 +199,7 @@ for text in prompt_todo:
             batchsize=args.batchsize,
             latent_t_per_second=latent_t_per_second
         )
-    elif(args.mode == "sr_ip"):
+    elif(args.mode == "super_resolution_inpainting"):
         assert args.file_path is not None
         assert os.path.exists(args.file_path), "The original audio file \'%s\' for style transfer does not exist." % args.file_path
         waveform = super_resolution_and_inpainting(
