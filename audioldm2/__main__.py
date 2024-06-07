@@ -21,6 +21,15 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "-f",
+    "--file_path",
+    type=str,
+    required=False,
+    default=None,
+    help="(--mode super_resolution_inpainting): Original audio file for inpainting; Or (--mode generation): the guidance audio file for generating similar audio, DEFAULT None",
+)
+
+parser.add_argument(
 	"--transcription",
 	type=str,
 	required=False,
@@ -122,7 +131,7 @@ parser.add_argument(
     type=str,
     required=False,
     default="generation",
-    help="generation: text-to-audio generation, super_resolution_inpainting: super resolution and inpainting",
+    help="{generation,super_resolution_inpainting} generation: text-to-audio generation; super_resolution_inpainting: super resolution inpainting",
     choices=["generation", "super_resolution_inpainting"]
 )
 
