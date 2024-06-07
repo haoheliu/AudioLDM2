@@ -2,7 +2,7 @@
 
 [![arXiv](https://img.shields.io/badge/arXiv-2308.05734-brightgreen.svg?style=flat-square)](https://arxiv.org/abs/2308.05734)  [![githubio](https://img.shields.io/badge/GitHub.io-Audio_Samples-blue?logo=Github&style=flat-square)](https://audioldm.github.io/audioldm2/)  [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/haoheliu/audioldm2-text2audio-text2music)  
 
-This repo currently support Text-to-Audio (including Music) and Text-to-Speech Generation. 
+This repo currently support Text-to-Audio (including Music), Text-to-Speech Generation and Super Resolution Inpainting. 
 
 <hr>
 
@@ -111,11 +111,15 @@ We currently support 3 devices:
   usage: audioldm2 [-h] [-t TEXT] [-tl TEXT_LIST] [-s SAVE_PATH]
                  [--model_name {audioldm_48k, audioldm_16k_crossattn_t5, audioldm2-full,audioldm2-music-665k,audioldm2-full-large-1150k,audioldm2-speech-ljspeech,audioldm2-speech-gigaspeech}] [-d DEVICE]
                  [-b BATCHSIZE] [--ddim_steps DDIM_STEPS] [-gs GUIDANCE_SCALE] [-n N_CANDIDATE_GEN_PER_TEXT]
-                 [--seed SEED]
+                 [--seed SEED] [--mode {generation,super_resolution_inpainting}] [-f FILE_PATH]
 
   optional arguments:
     -h, --help            show this help message and exit
+    --mode {generation,super_resolution_inpainting}
+                        generation: text-to-audio generation; super_resolution_inpainting: super resolution inpainting 
     -t TEXT, --text TEXT  Text prompt to the model for audio generation
+    -f FILE_PATH, --file_path FILE_PATH
+                        (--mode super_resolution_inpainting): Original audio file for inpainting; Or (--mode generation): the guidance audio file for generating similar audio, DEFAULT None
     --transcription TRANSCRIPTION
                         Transcription used for speech synthesis
     -tl TEXT_LIST, --text_list TEXT_LIST
