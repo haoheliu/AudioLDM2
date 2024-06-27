@@ -104,15 +104,16 @@ audioldm2 --model_name "audioldm2-full" --device mps -t "Musical constellations 
 
 We have five checkpoints you can choose:
 
-1. **audioldm2-full** (default): Generate both sound effect and music generation with the AudioLDM2 architecture. 
+1. **audioldm2-full** (default): Generate both sound effect and music generation with the AudioLDM2 architecture.
 2. **audioldm_48k**: This checkpoint can generate high fidelity sound effect and music.
-2. **audioldm_16k_crossattn_t5**: The improved version of [AudioLDM 1.0](https://github.com/haoheliu/AudioLDM).
+3. **audioldm_16k_crossattn_t5**: The improved version of [AudioLDM 1.0](https://github.com/haoheliu/AudioLDM).
 4. **audioldm2-full-large-1150k**: Larger version of audioldm2-full. 
 5. **audioldm2-music-665k**: Music generation. 
 6. **audioldm2-speech-gigaspeech** (default for TTS): Text-to-Speech, trained on GigaSpeech Dataset.
 7. **audioldm2-speech-ljspeech**: Text-to-Speech, trained on LJSpeech Dataset.
 
 We currently support 3 devices:
+
 - cpu
 - cuda
 - mps ( Notice that the computation requires about 20GB of RAM. )
@@ -127,7 +128,7 @@ We currently support 3 devices:
 
   optional arguments:
     -h, --help            show this help message and exit
-    --mode {generation,super_resolution_inpainting}
+    --mode {generation,sr_inpainting}
                         generation: text-to-audio generation; sr_inpainting: super resolution inpainting 
     -t TEXT, --text TEXT  Text prompt to the model for audio generation
     -f FILE_PATH, --file_path FILE_PATH
