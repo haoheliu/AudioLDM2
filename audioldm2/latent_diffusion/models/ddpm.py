@@ -1570,6 +1570,113 @@ class LatentDiffusion(DDPM):
             return waveform
 
     @torch.no_grad()
+    def generate_batch_masked(
+        self,
+        batch,
+        ddim_steps=200,
+        ddim_eta=1.0,
+        x_T=None,
+        n_gen=1,
+        unconditional_guidance_scale=1.0,
+        unconditional_conditioning=None,
+        use_plms=False,
+        time_mask_ratio_start_and_end=(0.25, 0.75),
+        freq_mask_ratio_start_and_end=(0.75, 1.0),
+        **kwargs,
+    ):
+        # Generate n_gen times and select the best
+        # Batch: audio, text, fnames
+        assert x_T is None
+
+        if use_plms:
+            assert ddim_steps is not None
+
+        use_ddim = ddim_steps is not None
+
+        # with self.ema_scope("Plotting"):
+        for i in range(1):
+            z, c = self.get_input(
+                batch,
+                self.first_stage_key,
+                unconditional_prob_cfg=0.0,  # Do not output unconditional information in the c
+            )
+
+            c = self.filter_useful_cond_dict(c)
+
+            text = super().get_input(batch, "text")
+
+            # Generate multiple samples
+            batch_size = z.shape[0] * n_gen
+
+            _, h, w = z.shape[0], z.shape[2], z.shape[3]
+                
+            mask = torch.ones(batch_size, h, w).to(self.device)
+            
+            mask[:, int(h * time_mask_ratio_start_and_end[0]) : int(h * time_mask_ratio_start_and_end[1]), :] = 0 
+            mask[:, :, int(w * freq_mask_ratio_start_and_end[0]) : int(w * freq_mask_ratio_start_and_end[1])] = 0 
+            mask = mask[:, None, ...]
+
+            # Generate multiple samples at a time and filter out the best
+            # The condition to the diffusion wrapper can have many format
+            for cond_key in c.keys():
+                if isinstance(c[cond_key], list):
+                    for i in range(len(c[cond_key])):
+                        c[cond_key][i] = torch.cat([c[cond_key][i]] * n_gen, dim=0)
+                elif isinstance(c[cond_key], dict):
+                    for k in c[cond_key].keys():
+                        c[cond_key][k] = torch.cat([c[cond_key][k]] * n_gen, dim=0)
+                else:
+                    c[cond_key] = torch.cat([c[cond_key]] * n_gen, dim=0)
+
+            text = text * n_gen
+
+            if unconditional_guidance_scale != 1.0:
+                unconditional_conditioning = {}
+                for key in self.cond_stage_model_metadata:
+                    model_idx = self.cond_stage_model_metadata[key]["model_idx"]
+                    unconditional_conditioning[key] = self.cond_stage_models[
+                        model_idx
+                    ].get_unconditional_condition(batch_size)
+
+            fnames = list(super().get_input(batch, "fname"))
+            samples, _ = self.sample_log(
+                cond=c,
+                batch_size=batch_size,
+                x_T=x_T,
+                ddim=use_ddim,
+                ddim_steps=ddim_steps,
+                eta=ddim_eta,
+                unconditional_guidance_scale=unconditional_guidance_scale,
+                unconditional_conditioning=unconditional_conditioning,
+                use_plms=use_plms, mask=mask, x0=torch.cat([z] * n_gen)
+            )
+
+            mel = self.decode_first_stage(samples)
+
+            waveform = self.mel_spectrogram_to_waveform(
+                mel, savepath="", bs=None, name=fnames, save=False
+            )
+
+            if n_gen > 1:
+                best_index = []
+                similarity = self.clap.cos_similarity(
+                    torch.FloatTensor(waveform).squeeze(1), text
+                )
+                for i in range(z.shape[0]):
+                    candidates = similarity[i :: z.shape[0]]
+                    max_index = torch.argmax(candidates).item()
+                    best_index.append(i + max_index * z.shape[0])
+
+                waveform = waveform[best_index]
+
+                print("Similarity between generated audio and text:")
+                print(' '.join('{:.2f}'.format(num) for num in similarity.detach().cpu().tolist()))
+                print("Choose the following indexes as the output:", best_index)
+
+            return waveform
+
+
+    @torch.no_grad()
     def generate_sample(
         self,
         batchs,
