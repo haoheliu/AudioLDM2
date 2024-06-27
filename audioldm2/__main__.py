@@ -26,7 +26,7 @@ parser.add_argument(
     type=str,
     required=False,
     default=None,
-    help="(--mode super_resolution_inpainting): Original audio file for inpainting; Or (--mode generation): the guidance audio file for generating similar audio, DEFAULT None",
+    help="(--mode sr_inpainting): Original audio file for inpainting; Or (--mode generation): the guidance audio file for generating similar audio, DEFAULT None",
 )
 
 parser.add_argument(
@@ -131,8 +131,8 @@ parser.add_argument(
     type=str,
     required=False,
     default="generation",
-    help="{generation,super_resolution_inpainting} generation: text-to-audio generation; super_resolution_inpainting: super resolution inpainting",
-    choices=["generation", "super_resolution_inpainting"]
+    help="{generation,sr_inpainting} generation: text-to-audio generation; sr_inpainting: super resolution inpainting",
+    choices=["generation", "sr_inpainting"]
 )
 
 args = parser.parse_args()
@@ -201,7 +201,7 @@ for text in prompt_todo:
             batchsize=args.batchsize,
             latent_t_per_second=latent_t_per_second
         )
-	elif(args.mode == "super_resolution_inpainting"):
+	elif(args.mode == "sr_inpainting"):
 		assert args.file_path is not None
 		assert os.path.exists(args.file_path), "The original audio file \'%s\' for style transfer does not exist." % args.file_path
 		waveform = super_resolution_and_inpainting(
@@ -218,4 +218,4 @@ for text in prompt_todo:
             latent_t_per_second=latent_t_per_second
         )
     
-    save_wave(waveform, save_path, name=name, samplerate=sample_rate)
+	save_wave(waveform, save_path, name=name, samplerate=sample_rate)
