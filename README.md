@@ -2,16 +2,18 @@
 
 [![arXiv](https://img.shields.io/badge/arXiv-2308.05734-brightgreen.svg?style=flat-square)](https://arxiv.org/abs/2308.05734)  [![githubio](https://img.shields.io/badge/GitHub.io-Audio_Samples-blue?logo=Github&style=flat-square)](https://audioldm.github.io/audioldm2/)  [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/haoheliu/audioldm2-text2audio-text2music)  
 
-This repo currently support Text-to-Audio (including Music), Text-to-Speech Generation and Super Resolution Inpainting. 
+This repo currently support Text-to-Audio (including Music), Text-to-Speech Generation and Super Resolution Inpainting.
 
 <hr>
 
 ## Change Log
+
 - 2023-08-27: Add two new checkpoints! 
   - 🌟 **48kHz AudioLDM model**: Now we support high-fidelity audio generation! [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/haoheliu/AudioLDM_48K_Text-to-HiFiAudio_Generation)  
   - **16kHz improved AudioLDM model**: Trained with more data and optimized model architecture.
 
 ## TODO
+
 - [x] Add the text-to-speech checkpoint
 - [x] Open-source the [AudioLDM training code](https://github.com/haoheliu/AudioLDM-training-finetuning).
 - [x] Support the generation of longer audio (> 10s)
@@ -22,21 +24,27 @@ This repo currently support Text-to-Audio (including Music), Text-to-Speech Gene
 ## Web APP
 
 1. Prepare running environment
+
 ```shell
 conda create -n audioldm python=3.8; conda activate audioldm
 pip3 install git+https://github.com/haoheliu/AudioLDM2.git
 git clone https://github.com/haoheliu/AudioLDM2; cd AudioLDM2
 ```
+
 2. Start the web application (powered by Gradio)
+
 ```shell
 python3 app.py
 ```
+
 3. A link will be printed out. Click the link to open the browser and play.
 
 ## Commandline Usage
 
 ### Installation
+
 Prepare running environment
+
 ```shell
 # Optional
 conda create -n audioldm python=3.8; conda activate audioldm
@@ -44,12 +52,14 @@ conda create -n audioldm python=3.8; conda activate audioldm
 pip3 install git+https://github.com/haoheliu/AudioLDM2.git
 ```
 
-If you plan to play around with text-to-speech generation. Please also make sure you have installed [espeak](https://espeak.sourceforge.net/download.html). On linux you can do it by 
+If you plan to play around with text-to-speech generation. Please also make sure you have installed [espeak](https://espeak.sourceforge.net/download.html). On linux you can do it by
+
 ```shell
 sudo apt-get install espeak
 ```
 
 ### Run the model in commandline
+
 - Generate sound effect or Music based on a text prompt
 
 ```shell
@@ -75,6 +85,7 @@ Text-to-Speech use the *audioldm2-speech-gigaspeech* checkpoint by default. If y
 ## Random Seed Matters
 
 Sometimes model may not perform well (sounds wired or low quality) when changing into a different hardware. In this case, please adjust the random seed and find the optimal one for your hardware. 
+
 ```shell
 audioldm2 --seed 1234 -t "Musical constellations twinkling in the night sky, forming a cosmic melody."
 ```
@@ -107,6 +118,7 @@ We currently support 3 devices:
 - mps ( Notice that the computation requires about 20GB of RAM. )
 
 ## Other options
+
 ```shell
   usage: audioldm2 [-h] [-t TEXT] [-tl TEXT_LIST] [-s SAVE_PATH]
                  [--model_name {audioldm_48k, audioldm_16k_crossattn_t5, audioldm2-full,audioldm2-music-665k,audioldm2-full-large-1150k,audioldm2-speech-ljspeech,audioldm2-speech-gigaspeech}] [-d DEVICE]
@@ -145,7 +157,7 @@ We currently support 3 devices:
     --seed SEED           Change this value (any integer number) will lead to a different generation result.
 ```
 
-# Hugging Face 🧨 Diffusers
+## Hugging Face 🧨 Diffusers
 
 AudioLDM 2 is available in the Hugging Face [🧨 Diffusers](https://github.com/huggingface/diffusers) library from v0.21.0 
 onwards. The official checkpoints can be found on the [Hugging Face Hub](https://huggingface.co/cvssp/audioldm2#checkpoint-details), 
@@ -185,6 +197,7 @@ including the use of prompt engineering and negative prompting.
 Tips for optimising inference speed can be found in the blog post [AudioLDM 2, but faster ⚡️](https://huggingface.co/blog/audioldm2).
 
 ## Cite this work
+
 If you found this tool useful, please consider citing
 
 ```bibtex
@@ -208,4 +221,3 @@ If you found this tool useful, please consider citing
   pages={21450-21474}
 }
 ```
-
