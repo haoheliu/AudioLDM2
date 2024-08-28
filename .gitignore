@@ -7,3 +7,4 @@ gradio_cached*
 dist*
 *egg-info
 build*
+*.DS_Store
