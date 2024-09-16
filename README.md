@@ -84,7 +84,7 @@ Text-to-Speech use the *audioldm2-speech-gigaspeech* checkpoint by default. If y
 
 ## Random Seed Matters
 
-Sometimes model may not perform well (sounds wired or low quality) when changing into a different hardware. In this case, please adjust the random seed and find the optimal one for your hardware. 
+Sometimes model may not perform well (sounds weird or low quality) when changing into a different hardware. In this case, please adjust the random seed and find the optimal one for your hardware. 
 
 ```shell
 audioldm2 --seed 1234 -t "Musical constellations twinkling in the night sky, forming a cosmic melody."
