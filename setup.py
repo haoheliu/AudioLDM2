@@ -54,6 +54,7 @@ REQUIRED = [
     "transformers==4.30.2",
     "huggingface_hub",
     "progressbar",
+    "requests",
     "ftfy",
     "timm"
 ]

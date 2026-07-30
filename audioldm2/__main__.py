@@ -2,7 +2,7 @@
 import os
 import torch
 import logging
-from audioldm2 import text_to_audio, build_model, save_wave, get_time, read_list, super_resolution_and_inpainting
+from audioldm2 import text_to_audio, build_model, save_wave, get_time, read_list, super_resolution_and_inpainting, generate_music, is_music_model
 import argparse
 
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
@@ -63,6 +63,48 @@ parser.add_argument(
 	default="audioldm_48k",
 	choices=["audioldm_48k", "audioldm_16k_crossattn_t5", "audioldm2-full", "audioldm2-music-665k",
 	         "audioldm2-full-large-1150k", "audioldm2-speech-ljspeech", "audioldm2-speech-gigaspeech"]
+)
+
+
+parser.add_argument(
+    "--provider",
+    type=str,
+    required=False,
+    default="audioldm",
+    help="Generation backend: 'audioldm' for the local AudioLDM pipeline or 'minimax' for the MiniMax music-generation API.",
+    choices=["audioldm", "minimax"],
+)
+
+parser.add_argument(
+    "--minimax_region",
+    type=str,
+    required=False,
+    default="global_en",
+    help="MiniMax region endpoint: 'global_en' (api.minimax.io) or 'cn_zh' (api.minimaxi.com).",
+    choices=["global_en", "cn_zh"],
+)
+
+parser.add_argument(
+    "--minimax_model",
+    type=str,
+    required=False,
+    default=None,
+    help="MiniMax music model name (e.g. music-3.0, music-2.6, music-3.0-free, music-2.6-free). Defaults to the current MiniMax default music model.",
+)
+
+parser.add_argument(
+    "--lyrics",
+    type=str,
+    required=False,
+    default="",
+    help="(--provider minimax) Lyrics for MiniMax music generation.",
+)
+
+parser.add_argument(
+    "--is_instrumental",
+    action="store_true",
+    required=False,
+    help="(--provider minimax) Generate instrumental music without lyrics.",
 )
 
 parser.add_argument(
@@ -171,7 +213,13 @@ if (transcription):
 		text = "A female reporter is speaking full of emotion"
 
 os.makedirs(save_path, exist_ok=True)
-audioldm2 = build_model(model_name=args.model_name, device=args.device)
+
+# The local AudioLDM pipeline is only built when the local backend is selected.
+# The MiniMax music-generation backend delegates to the MiniMax hosted API and
+# does not need the local checkpoints.
+audioldm2 = None
+if args.provider == "audioldm":
+	audioldm2 = build_model(model_name=args.model_name, device=args.device)
 
 if (args.text_list):
 	print("Generate audio based on the text prompts in %s" % args.text_list)
@@ -187,6 +235,22 @@ for text in prompt_todo:
 
 	if (transcription):
 		name += "-TTS-%s" % transcription
+
+	if args.provider == "minimax":
+		# Delegate text-to-music generation to the MiniMax music-generation API.
+		# Only the local backend needs the AudioLDM checkpoints loaded above.
+		result = generate_music(
+			os.environ.get("MINIMAX_API_KEY", ""),
+			model=args.minimax_model,
+			prompt=text,
+			lyrics=args.lyrics or None,
+			is_instrumental=args.is_instrumental or None,
+			region=args.minimax_region,
+		)
+		print("MiniMax music generation completed (status=%s)." % result.get("status"))
+		# The MiniMax endpoint returns a URL or hex payload in data.audio; nothing
+		# to write to disk here, so skip the local waveform save.
+		continue
 
 	if(args.mode == "generation"):
 		waveform = text_to_audio(
@@ -217,5 +281,5 @@ for text in prompt_todo:
             batchsize=args.batchsize,
             latent_t_per_second=latent_t_per_second
         )
-    
+
 	save_wave(waveform, save_path, name=name, samplerate=sample_rate)
